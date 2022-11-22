@@ -3,9 +3,9 @@ import { UsersService } from '~/users/users.service'
 import { JwtService } from '@nestjs/jwt'
 import { User } from '@prisma/client'
 import { ConfigService } from '@nestjs/config'
-import * as bcrypt from 'bcrypt'
 import { PrismaService } from 'prisma/prisma.service'
 import { ForbiddenError } from 'apollo-server-express'
+import { randomBytes, createHash } from 'crypto'
 
 @Injectable()
 export class AuthService {
@@ -25,7 +25,7 @@ export class AuthService {
   }
 
   async signOut(refreshToken: string) {
-    const hash = await hashToken(refreshToken)
+    const hash = hashToken(refreshToken)
     await this.prisma.token.delete({ where: { token: hash } })
     return true
   }
@@ -43,7 +43,7 @@ export class AuthService {
     const { refreshToken, user, accessToken } = await this.issueToken(username)
     await this.prisma.token.create({
       data: {
-        token: await hashToken(refreshToken),
+        token: hashToken(refreshToken),
         userId: user.id,
       },
     })
@@ -61,18 +61,14 @@ export class AuthService {
       throw new NotFoundException('User not found')
     }
     const user = prepareUser(userFromDB)
-    const secretRt = this.config.get<string>('JWT_RT_SECRET')
     const signedUser = convertSignedUser(user)
-    const refreshToken = this.jwt.sign(signedUser, {
-      secret: secretRt,
-      expiresIn: '7d',
-    })
+    const refreshToken = generateRefreshToken()
     const accessToken = this.jwt.sign(signedUser, { expiresIn: '1m' })
     return { refreshToken, user, accessToken }
   }
 
   async refresh(rt: string) {
-    const hash = await hashToken(rt)
+    const hash = hashToken(rt)
     const token = await this.prisma.token.findUnique({
       where: { token: hash },
       include: { user: true },
@@ -85,7 +81,7 @@ export class AuthService {
     )
     await this.prisma.token.update({
       where: { token: hash },
-      data: { token: await hashToken(refreshToken) },
+      data: { token: generateRefreshToken() },
     })
 
     return { accessToken, refreshToken, user }
@@ -112,6 +108,11 @@ function convertSignedUser(user: ReturnType<typeof prepareUser>): SignedUser {
   return result
 }
 
+function generateRefreshToken() {
+  const size = 32
+  return Buffer.from(randomBytes(size).toString('ascii')).toString('base64')
+}
+
 function hashToken(token: string) {
-  return bcrypt.hash(token, 10)
+  return createHash('sha256').update(token).digest('hex')
 }

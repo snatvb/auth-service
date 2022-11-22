@@ -10,14 +10,29 @@ import {
   removeMe,
 } from './helpers'
 
+const refreshQL = gql`
+  mutation refresh($refreshToken: String!) {
+    refresh(refreshToken: $refreshToken) {
+      accessToken
+      refreshToken
+    }
+  }
+`
+
+type RefreshResponse = {
+  refresh: { accessToken: string; refreshToken: string }
+}
+
 describe('Users (e2e)', () => {
   let app: INestApplication
 
   let user: User
   let token: string
+  let refreshToken: string
 
   let secondUser: User
   let secondToken: string
+  let secondRefreshToken: string
 
   beforeAll(async () => {
     app = await createApp()
@@ -25,6 +40,7 @@ describe('Users (e2e)', () => {
     const signed = await loginUser(app)
     user = signed.user
     token = signed.accessToken
+    refreshToken = signed.refreshToken
 
     const user2 = {
       username: 'e2e_tester_2',
@@ -35,6 +51,7 @@ describe('Users (e2e)', () => {
     const secondSigned = await loginUser(app, user2)
     secondUser = secondSigned.user
     secondToken = secondSigned.accessToken
+    secondRefreshToken = secondSigned.refreshToken
   })
 
   afterAll(async () => {
@@ -54,6 +71,19 @@ describe('Users (e2e)', () => {
     expect(updatedUser.avatar).toBe('https://example.com/avatar.png')
     expect(updatedUser.id).toBe(user.id)
     expect(updatedUser.username).toBe(usernameBefore)
+  })
+
+  it('Refresh token', async () => {
+    const response = await request<RefreshResponse>(app.getHttpServer())
+      .mutate(refreshQL)
+      .variables({ refreshToken })
+      .expectNoErrors()
+    expect(response.data).not.toBeNull()
+    const { accessToken, refreshToken: newRefreshToken } =
+      response.data!.refresh
+    expect(accessToken).not.toBeNull()
+    expect(newRefreshToken).not.toBeNull()
+    refreshToken = newRefreshToken
   })
 
   it('User update should failure', async () => {

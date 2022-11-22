@@ -40,7 +40,7 @@ export function loginUser(
   user: { username: string; password: string } = testUser,
 ) {
   return request<{
-    signIn: { user: User; accessToken: string }
+    signIn: { user: User; accessToken: string; refreshToken: string }
   }>(app.getHttpServer())
     .mutate(
       gql`
@@ -55,6 +55,7 @@ export function loginUser(
               updatedAt
             }
             accessToken
+            refreshToken
           }
         }
       `,
