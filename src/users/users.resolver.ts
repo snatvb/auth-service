@@ -10,6 +10,7 @@ import { OwnerGuard } from './owner.guard'
 import { User } from '@prisma/client'
 import { Role } from './entities/role.enum'
 import { Roles } from './roles.decorator'
+import { DevOnlyGuard } from './dev-only.guard'
 
 @Resolver(() => UserEntity)
 export class UsersResolver {
@@ -74,5 +75,11 @@ export class UsersResolver {
   @Mutation(() => UserEntity)
   removeMe(@Context() context: JwtAuthContext) {
     return this.usersService.remove(context.req.user.id)
+  }
+
+  @UseGuards(DevOnlyGuard)
+  @Mutation(() => UserEntity)
+  promoteRole__dev(@Args('id') id: string, @Args('role') role: Role) {
+    return this.usersService.promoteRole(id, role)
   }
 }

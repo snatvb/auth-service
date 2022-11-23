@@ -63,6 +63,24 @@ type ResponseUsersQuery = {
   }>
 }
 
+const promoteRoleDevQL = gql`
+  mutation promoteRole($id: String!, $role: String!) {
+    promoteRole__dev(id: $id, role: $role) {
+      id
+      username
+      roles
+    }
+  }
+`
+
+type ResponsePromoteRoleDevQuery = {
+  promoteRole: {
+    id: string
+    username: string
+    roles: []
+  }
+}
+
 describe('Users (e2e)', () => {
   let app: INestApplication
 
@@ -80,12 +98,15 @@ describe('Users (e2e)', () => {
     await recreateUser(app, user1)
     await recreateUser(app, user2)
     await recreateUser(app, adminUser1)
+
     const secondSigned = await loginUser(app, user2)
     secondUser = secondSigned.user
     secondToken = secondSigned.accessToken
+
     const signedAdmin = await loginUser(app, adminUser1)
     adminUser = signedAdmin.user
     adminToken = signedAdmin.accessToken
+    await promoteAdminDev(app, adminUser.id).expectNoErrors()
   })
 
   afterAll(async () => {
@@ -193,5 +214,14 @@ function updateUser(app: INestApplication, token: string, userId: string) {
         id: userId,
         avatar: 'https://example.com/avatar.png',
       },
+    })
+}
+
+function promoteAdminDev(app: INestApplication, userId: string) {
+  return request<ResponsePromoteRoleDevQuery>(app.getHttpServer())
+    .mutate(promoteRoleDevQL)
+    .variables({
+      id: userId,
+      role: 'admin',
     })
 }
