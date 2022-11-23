@@ -1,6 +1,5 @@
 import { INestApplication } from '@nestjs/common'
 import request from 'supertest-graphql'
-import gql from 'graphql-tag'
 import { User } from '~/users/entities/user.entity'
 import {
   createApp,
@@ -18,7 +17,7 @@ import {
   sessionsQL,
   terminateSessionQL,
   signOutQL,
-} from './gql'
+} from './helpers/gql'
 
 const user1 = {
   username: 'e2e_tester',
@@ -66,17 +65,6 @@ describe('Auth (e2e)', () => {
     user = signed.user
     token = signed.accessToken
     refreshToken = signed.refreshToken
-  })
-
-  it('User update', async () => {
-    const usernameBefore = user.username
-    const response = await updateUser(app, token, user.id).expectNoErrors()
-    expect(response.data).not.toBeNull()
-    const updatedUser = response.data!.updateUser
-    user.avatar = updatedUser.avatar
-    expect(updatedUser.avatar).toBe('https://example.com/avatar.png')
-    expect(updatedUser.id).toBe(user.id)
-    expect(updatedUser.username).toBe(usernameBefore)
   })
 
   it('Refresh token', async () => {
@@ -196,27 +184,3 @@ describe('Auth (e2e)', () => {
       .variables({ refreshToken })
   }
 })
-
-function updateUser(app: INestApplication, token: string, userId: string) {
-  return request<{
-    updateUser: { id: string; avatar: string; username: string }
-  }>(app.getHttpServer())
-    .set('Authorization', `Bearer ${token}`)
-    .mutate(
-      gql`
-        mutation updateUser($input: UpdateUserInput!) {
-          updateUser(updateUserInput: $input) {
-            id
-            avatar
-            username
-          }
-        }
-      `,
-    )
-    .variables({
-      input: {
-        id: userId,
-        avatar: 'https://example.com/avatar.png',
-      },
-    })
-}

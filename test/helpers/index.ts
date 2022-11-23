@@ -4,6 +4,7 @@ import gql from 'graphql-tag'
 import { AppModule } from '~/app.module'
 import request, { SuperTestExecutionResult } from 'supertest-graphql'
 import { User } from '~/users/entities/user.entity'
+import { ResponseUpdateUser, updateUserQL } from './gql'
 
 const createUserQL = gql`
   mutation createUser($input: CreateUserInput!) {
@@ -138,4 +139,20 @@ export function expectNotFound<T = unknown>(
   response: SuperTestExecutionResult<T>,
 ) {
   expect(response.errors?.[0]?.extensions.code).toBe('404')
+}
+
+export function updateUser(
+  app: INestApplication,
+  token: string,
+  userId: string,
+) {
+  return request<ResponseUpdateUser>(app.getHttpServer())
+    .set('Authorization', `Bearer ${token}`)
+    .mutate(updateUserQL)
+    .variables({
+      id: userId,
+      input: {
+        avatar: 'https://example.com/avatar.png',
+      },
+    })
 }

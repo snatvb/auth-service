@@ -3,7 +3,7 @@ import request from 'supertest-graphql'
 import gql from 'graphql-tag'
 import { User } from '~/users/entities/user.entity'
 import { createApp, recreateUser, loginUser, removeMe } from './helpers'
-import { refreshQL, RefreshResponse } from './gql'
+import { refreshQL, RefreshResponse } from './helpers/gql'
 
 const adminUser1 = {
   username: 'admin_tester',

@@ -49,7 +49,7 @@ export class UsersService {
   async update(
     id: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    { id: _, ...updateUserInput }: UpdateUserInput,
+    { id: _, ...updateUserInput }: Partial<User>,
   ): Promise<User> {
     const foundUser = await this.prisma.user.findUnique({
       where: {
@@ -59,6 +59,12 @@ export class UsersService {
     if (!foundUser) {
       throw new BadRequestException('User already exists')
     }
+    if ('password' in updateUserInput && updateUserInput.password) {
+      updateUserInput.password = await this.hashPassword(
+        updateUserInput.password,
+      )
+    }
+
     const updated = await this.prisma.user.update({
       where: { id },
       data: updateUserInput,

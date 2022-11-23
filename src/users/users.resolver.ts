@@ -51,15 +51,10 @@ export class UsersResolver {
     return user
   }
 
-  @UseGuards(
-    JwtAuthGuard,
-    OwnerGuard<{ updateUserInput: UpdateUserInput }>(
-      ({ updateUserInput }) => updateUserInput.id,
-    ),
-  )
+  @UseGuards(JwtAuthGuard, OwnerGuard<{ id: string }>(({ id }) => id))
   @Mutation(() => UserEntity)
-  updateUser(@Args('updateUserInput') updateUserInput: UpdateUserInput) {
-    return this.usersService.update(updateUserInput.id, updateUserInput)
+  updateUser(@Args('id') id: string, @Args('input') input: UpdateUserInput) {
+    return this.usersService.update(id, input)
   }
 
   @Mutation(() => UserEntity)

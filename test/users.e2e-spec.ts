@@ -1,6 +1,5 @@
 import { INestApplication } from '@nestjs/common'
 import request from 'supertest-graphql'
-import gql from 'graphql-tag'
 import { User } from '~/users/entities/user.entity'
 import {
   createApp,
@@ -9,8 +8,14 @@ import {
   loginUser,
   removeMe,
   expectNotFound,
+  updateUser,
 } from './helpers'
-import { ResponseUserQuery, userQL, ResponseUsersQuery, usersQL } from './gql'
+import {
+  ResponseUserQuery,
+  userQL,
+  ResponseUsersQuery,
+  usersQL,
+} from './helpers/gql'
 
 const user1 = {
   username: 'e2e_tester_users',
@@ -124,33 +129,3 @@ describe('Users (e2e)', () => {
     expectForbidden(response)
   })
 })
-
-function updateUser(app: INestApplication, token: string, userId: string) {
-  return request<{
-    updateUser: {
-      id: string
-      avatar: string
-      username: string
-      updatedAt: string
-    }
-  }>(app.getHttpServer())
-    .set('Authorization', `Bearer ${token}`)
-    .mutate(
-      gql`
-        mutation updateUser($input: UpdateUserInput!) {
-          updateUser(updateUserInput: $input) {
-            id
-            avatar
-            username
-            updatedAt
-          }
-        }
-      `,
-    )
-    .variables({
-      input: {
-        id: userId,
-        avatar: 'https://example.com/avatar.png',
-      },
-    })
-}

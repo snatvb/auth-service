@@ -96,3 +96,23 @@ export type ResponsePromoteRoleDevQuery = {
     roles: []
   }
 }
+
+export const updateUserQL = gql`
+  mutation updateUser($id: String!, $input: UpdateUserInput!) {
+    updateUser(id: $id, input: $input) {
+      id
+      avatar
+      username
+      updatedAt
+    }
+  }
+`
+
+export type ResponseUpdateUser = {
+  updateUser: {
+    id: string
+    avatar: string
+    username: string
+    updatedAt: string
+  }
+}
