@@ -43,4 +43,10 @@ export class AuthResolver {
   sessions(@Context() context: JwtAuthContext) {
     return this.authService.findSessions(context.req.user.id)
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Boolean)
+  terminateSession(@Args('id') id: string, @Context() context: JwtAuthContext) {
+    return this.authService.terminateSession(context.req.user.id, id)
+  }
 }

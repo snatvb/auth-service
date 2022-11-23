@@ -33,7 +33,23 @@ export class AuthService {
       await this.prisma.token.delete({ where: { token: hash } })
       return true
     } catch (e) {
-      throw new ForbiddenException('Token not found')
+      throw new NotFoundException('Token not found')
+    }
+  }
+
+  async terminateSession(userId: string, id: string) {
+    const token = await this.prisma.token.findUnique({
+      where: { id },
+      select: { userId: true },
+    })
+    if (!token) {
+      throw new NotFoundException('Token not found')
+    }
+    if (token.userId === userId) {
+      await this.prisma.token.delete({ where: { id } })
+      return true
+    } else {
+      throw new ForbiddenException('You can only terminate your own sessions')
     }
   }
 

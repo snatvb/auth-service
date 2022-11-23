@@ -32,6 +32,12 @@ const sessionsQL = gql`
   }
 `
 
+const terminateSessionQL = gql`
+  mutation terminateSession($id: String!) {
+    terminateSession(id: $id)
+  }
+`
+
 const signOutQL = gql`
   mutation signOut($refreshToken: String!) {
     signOut(refreshToken: $refreshToken)
@@ -142,7 +148,7 @@ describe('Auth (e2e)', () => {
     await signOut().expectNoErrors()
     const response = await signOut()
     expect(response.data).toBeNull()
-    expectForbidden(response)
+    expectNotFound(response)
   })
 
   it('Get session', async () => {
@@ -162,6 +168,53 @@ describe('Auth (e2e)', () => {
     expect(found).not.toBeUndefined()
     expect(found!.userId).toBe(user.id)
     expect(found!.token).toBe(hashedToken)
+  })
+
+  it('Terminate session', async () => {
+    const responseSessions = await request<{
+      sessions: { id: string; token: string; userId: string }[]
+    }>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .query(sessionsQL)
+      .expectNoErrors()
+
+    expect(responseSessions.data).not.toBeNull()
+
+    const firstSessionId = responseSessions.data!.sessions[0].id
+
+    const response = await request<{
+      terminateSession: string
+    }>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .mutate(terminateSessionQL)
+      .variables({ id: firstSessionId })
+      .expectNoErrors()
+
+    expect(response.data).not.toBeNull()
+    expect(response.data!.terminateSession).toBe(true)
+  })
+
+  it('Terminate session should failure', async () => {
+    const responseSessions = await request<{
+      sessions: { id: string; token: string; userId: string }[]
+    }>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .query(sessionsQL)
+      .expectNoErrors()
+
+    expect(responseSessions.data).not.toBeNull()
+
+    const firstSessionId = responseSessions.data!.sessions[0].id
+
+    const response = await request<{
+      terminateSession: string
+    }>(app.getHttpServer())
+      .set('Authorization', `Bearer ${secondToken}`)
+      .mutate(terminateSessionQL)
+      .variables({ id: firstSessionId })
+
+    expect(response.data).toBeNull()
+    expectForbidden(response)
   })
 
   function signOut(bearerToken = token) {
