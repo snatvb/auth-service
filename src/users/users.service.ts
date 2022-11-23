@@ -3,7 +3,6 @@ import { PrismaService } from '../../prisma/prisma.service'
 import { CreateUserInput } from './dto/create-user.input'
 import { UpdateUserInput } from './dto/update-user.input'
 import * as bcrypt from 'bcrypt'
-import { Role } from './entities/role.enum'
 
 @Injectable()
 export class UsersService {
@@ -72,13 +71,17 @@ export class UsersService {
     return bcrypt.compare(password, hash)
   }
 
-  async promoteRole(id: string, role: Role) {
+  async promoteRole(id: string, role: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: { roles: true },
     })
     if (!user) {
       throw new BadRequestException(`User with id ${id} not found`)
+    }
+
+    if (user.roles.includes(role)) {
+      throw new BadRequestException(`User already has role ${role}`)
     }
 
     return this.prisma.user.update({

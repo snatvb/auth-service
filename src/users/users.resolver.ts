@@ -11,12 +11,14 @@ import { User } from '@prisma/client'
 import { Role } from './entities/role.enum'
 import { Roles } from './roles.decorator'
 import { DevOnlyGuard } from './dev-only.guard'
+import { RolesGuard } from './roles.guard'
 
 @Resolver(() => UserEntity)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
   @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Query(() => [UserEntity], { name: 'users' })
   findAll(
     @Args('skip', { type: () => Int }) skip: number,
@@ -65,11 +67,18 @@ export class UsersResolver {
     return this.usersService.create(createUserInput)
   }
 
-  @Mutation(() => UserEntity)
   @Roles(Role.Admin)
+  @Mutation(() => UserEntity)
   removeUser(@Args('id') id: string) {
     return this.usersService.remove(id)
   }
+
+  // @Roles(Role.Admin)
+  // @UseGuards(JwtAuthGuard)
+  // @Mutation(() => UserEntity)
+  // promoteRole(@Args('id') id: string, @Args('role') role: string) {
+  //   return this.usersService.promoteRole(id, role)
+  // }
 
   @UseGuards(JwtAuthGuard, OwnerGuard((_, { id }) => id))
   @Mutation(() => UserEntity)
@@ -79,7 +88,7 @@ export class UsersResolver {
 
   @UseGuards(DevOnlyGuard)
   @Mutation(() => UserEntity)
-  promoteRole__dev(@Args('id') id: string, @Args('role') role: Role) {
+  promoteRole__dev(@Args('id') id: string, @Args('role') role: string) {
     return this.usersService.promoteRole(id, role)
   }
 }

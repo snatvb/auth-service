@@ -64,8 +64,8 @@ type ResponseUsersQuery = {
 }
 
 const promoteRoleDevQL = gql`
-  mutation promoteRole($id: String!, $role: String!) {
-    promoteRole__dev(id: $id, role: $role) {
+  mutation ($id: String!, $role: String!) {
+    promoteRole: promoteRole__dev(id: $id, role: $role) {
       id
       username
       roles
@@ -106,7 +106,11 @@ describe('Users (e2e)', () => {
     const signedAdmin = await loginUser(app, adminUser1)
     adminUser = signedAdmin.user
     adminToken = signedAdmin.accessToken
-    await promoteAdminDev(app, adminUser.id).expectNoErrors()
+    const adminResponse = await promoteAdminDev(
+      app,
+      adminUser.id,
+    ).expectNoErrors()
+    expect(adminResponse.data!.promoteRole.roles).toContain('admin')
   })
 
   afterAll(async () => {
@@ -190,6 +194,21 @@ describe('Users (e2e)', () => {
       })
 
     expectForbidden(response)
+  })
+
+  it('Get users by admin', async () => {
+    const response = await request<ResponseUsersQuery>(app.getHttpServer())
+      .set('Authorization', `Bearer ${adminToken}`)
+      .query(usersQL)
+      .variables({
+        skip: 0,
+        take: 10,
+      })
+      .expectNoErrors()
+
+    expect(response.data).not.toBeNull()
+    const users = response.data!.users
+    expect(users.length).toBeGreaterThan(0)
   })
 })
 
