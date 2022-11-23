@@ -38,11 +38,11 @@ export class UsersService {
   }
 
   findOne(id: string) {
-    return this.prisma.user.findFirst({ where: { id } })
+    return this.prisma.user.findUnique({ where: { id } })
   }
 
   findOneByUsername(username: string) {
-    return this.prisma.user.findFirst({ where: { username } })
+    return this.prisma.user.findUnique({ where: { username } })
   }
 
   async update(id: string, updateUserInput: UpdateUserInput) {

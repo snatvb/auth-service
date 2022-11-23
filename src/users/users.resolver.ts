@@ -1,19 +1,20 @@
 import { JwtAuthContext } from './../auth/jwt-auth.guard'
 import { Resolver, Query, Mutation, Args, Int, Context } from '@nestjs/graphql'
 import { UsersService } from './users.service'
-import { User } from './entities/user.entity'
+import { User as UserEntity } from './entities/user.entity'
 import { CreateUserInput } from './dto/create-user.input'
 import { UpdateUserInput } from './dto/update-user.input'
-import { UseGuards } from '@nestjs/common'
+import { NotFoundException, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from '~/auth/jwt-auth.guard'
 import { OwnerGuard } from './owner.guard'
+import { User } from '@prisma/client'
 
-@Resolver(() => User)
+@Resolver(() => UserEntity)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Query(() => [User], { name: 'users' })
+  @Query(() => [UserEntity], { name: 'users' })
   findAll(
     @Args('skip', { type: () => Int }) skip: number,
     @Args('take', { type: () => Int }) take: number,
@@ -22,14 +23,27 @@ export class UsersResolver {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Query(() => User, { name: 'me' })
-  me(@Context() context: JwtAuthContext) {
-    return this.usersService.findOneByUsername(context.req.user.username)
+  @Query(() => UserEntity, { name: 'me' })
+  async me(@Context() context: JwtAuthContext): Promise<User> {
+    const user = await this.usersService.findOneByUsername(
+      context.req.user.username,
+    )
+    if (!user) {
+      throw new NotFoundException(
+        `User with username ${context.req.user.username} not found`,
+      )
+    }
+
+    return user
   }
 
-  @Query(() => User, { name: 'user' })
-  findOne(@Args('id') id: string) {
-    return this.usersService.findOne(id)
+  @Query(() => UserEntity, { name: 'user' })
+  async findOne(@Args('id') id: string): Promise<User> {
+    const user = await this.usersService.findOne(id)
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`)
+    }
+    return user
   }
 
   @UseGuards(
@@ -38,23 +52,23 @@ export class UsersResolver {
       ({ updateUserInput }) => updateUserInput.id,
     ),
   )
-  @Mutation(() => User)
+  @Mutation(() => UserEntity)
   updateUser(@Args('updateUserInput') updateUserInput: UpdateUserInput) {
     return this.usersService.update(updateUserInput.id, updateUserInput)
   }
 
-  @Mutation(() => User)
+  @Mutation(() => UserEntity)
   createUser(@Args('createUserInput') createUserInput: CreateUserInput) {
     return this.usersService.create(createUserInput)
   }
 
-  @Mutation(() => User)
+  @Mutation(() => UserEntity)
   removeUser(@Args('id') id: string) {
     return this.usersService.remove(id)
   }
 
   @UseGuards(JwtAuthGuard, OwnerGuard((_, { id }) => id))
-  @Mutation(() => User)
+  @Mutation(() => UserEntity)
   removeMe(@Context() context: JwtAuthContext) {
     return this.usersService.remove(context.req.user.id)
   }
