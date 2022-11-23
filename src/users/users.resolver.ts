@@ -8,12 +8,14 @@ import { NotFoundException, UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from '~/auth/jwt-auth.guard'
 import { OwnerGuard } from './owner.guard'
 import { User } from '@prisma/client'
+import { Role } from './entities/role.enum'
+import { Roles } from './roles.decorator'
 
 @Resolver(() => UserEntity)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @Roles(Role.Admin)
   @Query(() => [UserEntity], { name: 'users' })
   findAll(
     @Args('skip', { type: () => Int }) skip: number,
@@ -63,6 +65,7 @@ export class UsersResolver {
   }
 
   @Mutation(() => UserEntity)
+  @Roles(Role.Admin)
   removeUser(@Args('id') id: string) {
     return this.usersService.remove(id)
   }

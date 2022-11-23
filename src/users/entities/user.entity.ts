@@ -19,4 +19,7 @@ export class User {
 
   @Field()
   updatedAt: Date
+
+  @Field(() => [String])
+  roles: string[]
 }
