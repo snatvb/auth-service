@@ -11,6 +11,12 @@ import {
   expectNotFound,
 } from './helpers'
 
+const adminUser1 = {
+  username: 'admin_tester',
+  password: 'admin_tester_pass',
+  email: 'e2e_admin@ete2.com',
+}
+
 const user1 = {
   username: 'e2e_tester_users',
   password: 'e2e_tester_users_pass',
@@ -39,7 +45,25 @@ type ResponseUserQuery = {
   }
 }
 
-describe('Auth (e2e)', () => {
+const usersQL = gql`
+  query users($skip: Int!, $take: Int!) {
+    users(skip: $skip, take: $take) {
+      id
+      username
+      roles
+    }
+  }
+`
+
+type ResponseUsersQuery = {
+  users: Array<{
+    id: string
+    username: string
+    roles: []
+  }>
+}
+
+describe('Users (e2e)', () => {
   let app: INestApplication
 
   let user: User
@@ -48,20 +72,29 @@ describe('Auth (e2e)', () => {
   let secondUser: User
   let secondToken: string
 
+  let adminUser: User
+  let adminToken: string
+
   beforeAll(async () => {
     app = await createApp()
     await recreateUser(app, user1)
     await recreateUser(app, user2)
+    await recreateUser(app, adminUser1)
     const secondSigned = await loginUser(app, user2)
     secondUser = secondSigned.user
     secondToken = secondSigned.accessToken
+    const signedAdmin = await loginUser(app, adminUser1)
+    adminUser = signedAdmin.user
+    adminToken = signedAdmin.accessToken
   })
 
   afterAll(async () => {
     const response = await removeMe(app, token)
     const responseSecond = await removeMe(app, secondToken)
+    const responseAdmin = await removeMe(app, adminToken)
     expect(response.username).toEqual(user.username)
     expect(responseSecond.username).toEqual(secondUser.username)
+    expect(responseAdmin.username).toEqual(adminUser.username)
     await app.close()
   })
 
@@ -124,6 +157,18 @@ describe('Auth (e2e)', () => {
 
     expect(response.data).toBeNull()
     expectNotFound(response)
+  })
+
+  it('Get users should 403', async () => {
+    const response = await request<ResponseUsersQuery>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .query(usersQL)
+      .variables({
+        skip: 0,
+        take: 10,
+      })
+
+    expectForbidden(response)
   })
 })
 
