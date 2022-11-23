@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service'
 import { CreateUserInput } from './dto/create-user.input'
 import { UpdateUserInput } from './dto/update-user.input'
 import * as bcrypt from 'bcrypt'
+import { User } from '@prisma/client'
 
 @Injectable()
 export class UsersService {
@@ -45,7 +46,11 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { username } })
   }
 
-  async update(id: string, updateUserInput: UpdateUserInput) {
+  async update(
+    id: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    { id: _, ...updateUserInput }: UpdateUserInput,
+  ): Promise<User> {
     const foundUser = await this.prisma.user.findUnique({
       where: {
         id,
@@ -54,9 +59,11 @@ export class UsersService {
     if (!foundUser) {
       throw new BadRequestException('User already exists')
     }
-    foundUser.avatar = updateUserInput.avatar
-    await this.prisma.user.update({ where: { id }, data: foundUser })
-    return foundUser
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: updateUserInput,
+    })
+    return updated
   }
 
   remove(id: string) {

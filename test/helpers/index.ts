@@ -50,6 +50,7 @@ export function loginUser(
               avatar
               createdAt
               updatedAt
+              roles
             }
             accessToken
             refreshToken

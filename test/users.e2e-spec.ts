@@ -62,10 +62,10 @@ describe('Users (e2e)', () => {
     const response = await updateUser(app, token, user.id).expectNoErrors()
     expect(response.data).not.toBeNull()
     const updatedUser = response.data!.updateUser
-    user.avatar = updatedUser.avatar
     expect(updatedUser.avatar).toBe('https://example.com/avatar.png')
     expect(updatedUser.id).toBe(user.id)
     expect(updatedUser.username).toBe(usernameBefore)
+    expect(user.updatedAt).not.toBe(updatedUser.updatedAt)
   })
 
   it('User update should failure', async () => {
@@ -127,7 +127,12 @@ describe('Users (e2e)', () => {
 
 function updateUser(app: INestApplication, token: string, userId: string) {
   return request<{
-    updateUser: { id: string; avatar: string; username: string }
+    updateUser: {
+      id: string
+      avatar: string
+      username: string
+      updatedAt: string
+    }
   }>(app.getHttpServer())
     .set('Authorization', `Bearer ${token}`)
     .mutate(
@@ -137,6 +142,7 @@ function updateUser(app: INestApplication, token: string, userId: string) {
             id
             avatar
             username
+            updatedAt
           }
         }
       `,
