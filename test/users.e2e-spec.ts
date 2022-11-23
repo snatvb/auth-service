@@ -10,12 +10,7 @@ import {
   removeMe,
   expectNotFound,
 } from './helpers'
-
-const adminUser1 = {
-  username: 'admin_tester',
-  password: 'admin_tester_pass',
-  email: 'e2e_admin@ete2.com',
-}
+import { ResponseUserQuery, userQL, ResponseUsersQuery, usersQL } from './gql'
 
 const user1 = {
   username: 'e2e_tester_users',
@@ -29,58 +24,6 @@ const user2 = {
   email: 'e2e_tester_2_users@ete2.com',
 }
 
-const userQL = gql`
-  query user($id: String!) {
-    user(id: $id) {
-      id
-      username
-    }
-  }
-`
-
-type ResponseUserQuery = {
-  user: {
-    id: string
-    username: string
-  }
-}
-
-const usersQL = gql`
-  query users($skip: Int!, $take: Int!) {
-    users(skip: $skip, take: $take) {
-      id
-      username
-      roles
-    }
-  }
-`
-
-type ResponseUsersQuery = {
-  users: Array<{
-    id: string
-    username: string
-    roles: []
-  }>
-}
-
-const promoteRoleDevQL = gql`
-  mutation ($id: String!, $role: String!) {
-    promoteRole: promoteRole__dev(id: $id, role: $role) {
-      id
-      username
-      roles
-    }
-  }
-`
-
-type ResponsePromoteRoleDevQuery = {
-  promoteRole: {
-    id: string
-    username: string
-    roles: []
-  }
-}
-
 describe('Users (e2e)', () => {
   let app: INestApplication
 
@@ -90,36 +33,21 @@ describe('Users (e2e)', () => {
   let secondUser: User
   let secondToken: string
 
-  let adminUser: User
-  let adminToken: string
-
   beforeAll(async () => {
     app = await createApp()
     await recreateUser(app, user1)
     await recreateUser(app, user2)
-    await recreateUser(app, adminUser1)
 
     const secondSigned = await loginUser(app, user2)
     secondUser = secondSigned.user
     secondToken = secondSigned.accessToken
-
-    const signedAdmin = await loginUser(app, adminUser1)
-    adminUser = signedAdmin.user
-    adminToken = signedAdmin.accessToken
-    const adminResponse = await promoteAdminDev(
-      app,
-      adminUser.id,
-    ).expectNoErrors()
-    expect(adminResponse.data!.promoteRole.roles).toContain('admin')
   })
 
   afterAll(async () => {
     const response = await removeMe(app, token)
     const responseSecond = await removeMe(app, secondToken)
-    const responseAdmin = await removeMe(app, adminToken)
     expect(response.username).toEqual(user.username)
     expect(responseSecond.username).toEqual(secondUser.username)
-    expect(responseAdmin.username).toEqual(adminUser.username)
     await app.close()
   })
 
@@ -195,21 +123,6 @@ describe('Users (e2e)', () => {
 
     expectForbidden(response)
   })
-
-  it('Get users by admin', async () => {
-    const response = await request<ResponseUsersQuery>(app.getHttpServer())
-      .set('Authorization', `Bearer ${adminToken}`)
-      .query(usersQL)
-      .variables({
-        skip: 0,
-        take: 10,
-      })
-      .expectNoErrors()
-
-    expect(response.data).not.toBeNull()
-    const users = response.data!.users
-    expect(users.length).toBeGreaterThan(0)
-  })
 })
 
 function updateUser(app: INestApplication, token: string, userId: string) {
@@ -233,14 +146,5 @@ function updateUser(app: INestApplication, token: string, userId: string) {
         id: userId,
         avatar: 'https://example.com/avatar.png',
       },
-    })
-}
-
-function promoteAdminDev(app: INestApplication, userId: string) {
-  return request<ResponsePromoteRoleDevQuery>(app.getHttpServer())
-    .mutate(promoteRoleDevQL)
-    .variables({
-      id: userId,
-      role: 'admin',
     })
 }

@@ -12,41 +12,13 @@ import {
   expectUnauthorized,
 } from './helpers'
 import { hashToken } from '~/auth/auth.service'
-
-const refreshQL = gql`
-  mutation refresh($refreshToken: String!) {
-    refresh(refreshToken: $refreshToken) {
-      accessToken
-      refreshToken
-    }
-  }
-`
-
-const sessionsQL = gql`
-  {
-    sessions {
-      id
-      token
-      userId
-    }
-  }
-`
-
-const terminateSessionQL = gql`
-  mutation terminateSession($id: String!) {
-    terminateSession(id: $id)
-  }
-`
-
-const signOutQL = gql`
-  mutation signOut($refreshToken: String!) {
-    signOut(refreshToken: $refreshToken)
-  }
-`
-
-type RefreshResponse = {
-  refresh: { accessToken: string; refreshToken: string }
-}
+import {
+  RefreshResponse,
+  refreshQL,
+  sessionsQL,
+  terminateSessionQL,
+  signOutQL,
+} from './gql'
 
 const user1 = {
   username: 'e2e_tester',
