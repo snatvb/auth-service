@@ -120,6 +120,6 @@ function generateRefreshToken() {
   return Buffer.from(randomBytes(size).toString('ascii')).toString('base64')
 }
 
-function hashToken(token: string) {
+export function hashToken(token: string) {
   return createHash('sha256').update(token).digest('hex')
 }

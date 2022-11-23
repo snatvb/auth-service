@@ -11,12 +11,23 @@ import {
   expectNotFound,
   expectUnauthorized,
 } from './helpers'
+import { hashToken } from '~/auth/auth.service'
 
 const refreshQL = gql`
   mutation refresh($refreshToken: String!) {
     refresh(refreshToken: $refreshToken) {
       accessToken
       refreshToken
+    }
+  }
+`
+
+const sessionsQL = gql`
+  {
+    sessions {
+      id
+      token
+      userId
     }
   }
 `
@@ -132,6 +143,25 @@ describe('Auth (e2e)', () => {
     const response = await signOut()
     expect(response.data).toBeNull()
     expectForbidden(response)
+  })
+
+  it('Get session', async () => {
+    const response = await request<{
+      sessions: { id: string; token: string; userId: string }[]
+    }>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .query(sessionsQL)
+      .expectNoErrors()
+
+    expect(response.data).not.toBeNull()
+    expect(response.data!.sessions.length).toBeGreaterThan(0)
+    const hashedToken = hashToken(refreshToken)
+    const found = response.data!.sessions.find(
+      (session) => session.token === hashedToken,
+    )
+    expect(found).not.toBeUndefined()
+    expect(found!.userId).toBe(user.id)
+    expect(found!.token).toBe(hashedToken)
   })
 
   function signOut(bearerToken = token) {

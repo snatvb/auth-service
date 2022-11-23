@@ -1,18 +1,15 @@
-import { ObjectType, Field, Int } from '@nestjs/graphql'
+import { ObjectType, Field } from '@nestjs/graphql'
 
 @ObjectType()
 export class Token {
-  @Field(() => Int)
+  @Field()
   id: string
 
   @Field()
-  userId: string
+  token: string
 
   @Field()
-  email: string
-
-  @Field({ nullable: true })
-  avatar?: string
+  userId: string
 
   @Field()
   createdAt: Date
