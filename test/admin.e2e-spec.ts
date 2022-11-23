@@ -2,14 +2,7 @@ import { INestApplication } from '@nestjs/common'
 import request from 'supertest-graphql'
 import gql from 'graphql-tag'
 import { User } from '~/users/entities/user.entity'
-import {
-  createApp,
-  recreateUser,
-  expectForbidden,
-  loginUser,
-  removeMe,
-  expectNotFound,
-} from './helpers'
+import { createApp, recreateUser, loginUser, removeMe } from './helpers'
 import { refreshQL, RefreshResponse } from './gql'
 
 const adminUser1 = {
