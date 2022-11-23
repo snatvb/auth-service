@@ -129,3 +129,9 @@ export function expectForbidden<T = unknown>(
 ) {
   expect(response.errors?.[0]?.extensions.code).toBe('FORBIDDEN')
 }
+
+export function expectNotFound<T = unknown>(
+  response: SuperTestExecutionResult<T>,
+) {
+  expect(response.errors?.[0]?.extensions.code).toBe('404')
+}

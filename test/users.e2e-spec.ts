@@ -8,6 +8,7 @@ import {
   expectForbidden,
   loginUser,
   removeMe,
+  expectNotFound,
 } from './helpers'
 
 const refreshQL = gql`
@@ -84,6 +85,24 @@ describe('Users (e2e)', () => {
     expect(accessToken).not.toBeNull()
     expect(newRefreshToken).not.toBeNull()
     refreshToken = newRefreshToken
+  })
+
+  it('Refresh token double times should be failure', async () => {
+    const response = await request<RefreshResponse>(app.getHttpServer())
+      .mutate(refreshQL)
+      .variables({ refreshToken: secondRefreshToken })
+      .expectNoErrors()
+    expect(response.data).not.toBeNull()
+    const { accessToken, refreshToken: newRefreshToken } =
+      response.data!.refresh
+    expect(accessToken).not.toBeNull()
+    expect(newRefreshToken).not.toBeNull()
+
+    const response2 = await request<RefreshResponse>(app.getHttpServer())
+      .mutate(refreshQL)
+      .variables({ refreshToken: secondRefreshToken })
+
+    expectNotFound(response2)
   })
 
   it('User update should failure', async () => {
