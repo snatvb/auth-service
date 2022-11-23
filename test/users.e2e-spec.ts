@@ -8,51 +8,36 @@ import {
   expectForbidden,
   loginUser,
   removeMe,
-  expectNotFound,
 } from './helpers'
 
-const refreshQL = gql`
-  mutation refresh($refreshToken: String!) {
-    refresh(refreshToken: $refreshToken) {
-      accessToken
-      refreshToken
-    }
-  }
-`
-
-type RefreshResponse = {
-  refresh: { accessToken: string; refreshToken: string }
+const user1 = {
+  username: 'e2e_tester_users',
+  password: 'e2e_tester_users_pass',
+  email: 'e2e_tester_users@ete2.com',
 }
 
-describe('Users (e2e)', () => {
+const user2 = {
+  username: 'e2e_tester_2_users',
+  password: 'e2e_tester_pass_2_users',
+  email: 'e2e_tester_2_users@ete2.com',
+}
+
+describe('Auth (e2e)', () => {
   let app: INestApplication
 
   let user: User
   let token: string
-  let refreshToken: string
 
   let secondUser: User
   let secondToken: string
-  let secondRefreshToken: string
 
   beforeAll(async () => {
     app = await createApp()
-    await recreateUser(app)
-    const signed = await loginUser(app)
-    user = signed.user
-    token = signed.accessToken
-    refreshToken = signed.refreshToken
-
-    const user2 = {
-      username: 'e2e_tester_2',
-      password: 'e2e_tester_pass_2',
-      email: 'e2e_tester_2@ete2.com',
-    }
+    await recreateUser(app, user1)
     await recreateUser(app, user2)
     const secondSigned = await loginUser(app, user2)
     secondUser = secondSigned.user
     secondToken = secondSigned.accessToken
-    secondRefreshToken = secondSigned.refreshToken
   })
 
   afterAll(async () => {
@@ -61,6 +46,12 @@ describe('Users (e2e)', () => {
     expect(response.username).toEqual(user.username)
     expect(responseSecond.username).toEqual(secondUser.username)
     await app.close()
+  })
+
+  beforeEach(async () => {
+    const signed = await loginUser(app, user1)
+    user = signed.user
+    token = signed.accessToken
   })
 
   it('User update', async () => {
@@ -72,37 +63,6 @@ describe('Users (e2e)', () => {
     expect(updatedUser.avatar).toBe('https://example.com/avatar.png')
     expect(updatedUser.id).toBe(user.id)
     expect(updatedUser.username).toBe(usernameBefore)
-  })
-
-  it('Refresh token', async () => {
-    const response = await request<RefreshResponse>(app.getHttpServer())
-      .mutate(refreshQL)
-      .variables({ refreshToken })
-      .expectNoErrors()
-    expect(response.data).not.toBeNull()
-    const { accessToken, refreshToken: newRefreshToken } =
-      response.data!.refresh
-    expect(accessToken).not.toBeNull()
-    expect(newRefreshToken).not.toBeNull()
-    refreshToken = newRefreshToken
-  })
-
-  it('Refresh token double times should be failure', async () => {
-    const response = await request<RefreshResponse>(app.getHttpServer())
-      .mutate(refreshQL)
-      .variables({ refreshToken: secondRefreshToken })
-      .expectNoErrors()
-    expect(response.data).not.toBeNull()
-    const { accessToken, refreshToken: newRefreshToken } =
-      response.data!.refresh
-    expect(accessToken).not.toBeNull()
-    expect(newRefreshToken).not.toBeNull()
-
-    const response2 = await request<RefreshResponse>(app.getHttpServer())
-      .mutate(refreshQL)
-      .variables({ refreshToken: secondRefreshToken })
-
-    expectNotFound(response2)
   })
 
   it('User update should failure', async () => {

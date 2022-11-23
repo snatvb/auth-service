@@ -1,10 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { UsersService } from '~/users/users.service'
 import { JwtService } from '@nestjs/jwt'
 import { User } from '@prisma/client'
 import { ConfigService } from '@nestjs/config'
 import { PrismaService } from 'prisma/prisma.service'
-import { ForbiddenError } from 'apollo-server-express'
 import { randomBytes, createHash } from 'crypto'
 
 @Injectable()
@@ -26,14 +29,18 @@ export class AuthService {
 
   async signOut(refreshToken: string) {
     const hash = hashToken(refreshToken)
-    await this.prisma.token.delete({ where: { token: hash } })
-    return true
+    try {
+      await this.prisma.token.delete({ where: { token: hash } })
+      return true
+    } catch (e) {
+      throw new ForbiddenException('Token not found')
+    }
   }
 
   async signOutAll(username: string) {
     const user = await this.users.findOneByUsername(username)
     if (!user) {
-      throw new ForbiddenError('User not found')
+      throw new ForbiddenException('User not found')
     }
     await this.prisma.token.deleteMany({ where: { userId: user.id } })
     return true

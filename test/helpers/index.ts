@@ -5,12 +5,6 @@ import { AppModule } from '~/app.module'
 import request, { SuperTestExecutionResult } from 'supertest-graphql'
 import { User } from '~/users/entities/user.entity'
 
-export const testUser = {
-  username: 'e2e_tester',
-  password: 'e2e_tester_pass',
-  email: 'e2e_tester@testere2e.com',
-}
-
 const createUserQL = gql`
   mutation createUser($input: CreateUserInput!) {
     createUser(createUserInput: $input) {
@@ -19,7 +13,10 @@ const createUserQL = gql`
     }
   }
 `
-export async function recreateUser(app: INestApplication, user = testUser) {
+export async function recreateUser(
+  app: INestApplication,
+  user: { username: string; password: string; email: string },
+) {
   const result = await request<{
     createUser: { id: string; username: string }
   }>(app.getHttpServer())
@@ -37,7 +34,7 @@ export async function recreateUser(app: INestApplication, user = testUser) {
 
 export function loginUser(
   app: INestApplication,
-  user: { username: string; password: string } = testUser,
+  user: { username: string; password: string },
 ) {
   return request<{
     signIn: { user: User; accessToken: string; refreshToken: string }
@@ -128,6 +125,12 @@ export function expectForbidden<T = unknown>(
   response: SuperTestExecutionResult<T>,
 ) {
   expect(response.errors?.[0]?.extensions.code).toBe('FORBIDDEN')
+}
+
+export function expectUnauthorized<T = unknown>(
+  response: SuperTestExecutionResult<T>,
+) {
+  expect(response.errors?.[0]?.extensions.code).toBe('UNAUTHENTICATED')
 }
 
 export function expectNotFound<T = unknown>(
