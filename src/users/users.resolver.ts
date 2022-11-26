@@ -4,7 +4,11 @@ import { UsersService } from './users.service'
 import { UserEntity } from './entities/user.entity'
 import { CreateUserInput } from './dto/create-user.input'
 import { UpdateUserInput } from './dto/update-user.input'
-import { NotFoundException, UseGuards } from '@nestjs/common'
+import {
+  BadRequestException,
+  NotFoundException,
+  UseGuards,
+} from '@nestjs/common'
 import { JwtAuthGuard } from '~/auth/jwt-auth.guard'
 import { OwnerGuard } from './owner.guard'
 import { User } from '@prisma/client'
@@ -50,5 +54,20 @@ export class UsersResolver {
   @Mutation(() => UserEntity)
   removeMe(@Context() context: JwtAuthContext) {
     return this.users.remove(context.req.user.id)
+  }
+
+  @UseGuards(JwtAuthGuard, OwnerGuard<{ id: string }>(({ id }) => id))
+  @Mutation(() => Boolean)
+  changePassword(
+    @Args('id') id: string,
+    @Args('oldPassword') oldPassword: string,
+    @Args('newPassword') newPassword: string,
+  ): Promise<boolean> {
+    if (oldPassword === newPassword) {
+      throw new BadRequestException('New password must be different')
+    }
+    return this.users
+      .changePassword(id, oldPassword, newPassword)
+      .then(() => true)
   }
 }

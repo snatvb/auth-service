@@ -9,12 +9,18 @@ import {
   removeMe,
   expectNotFound,
   updateUser,
+  expectUnauthorized,
+  expectBadRequest,
 } from './helpers'
 import {
   ResponseUserQuery,
   userQL,
   ResponseUsersQuery,
   usersQL,
+  ResponseChangePassword,
+  changePasswordQL,
+  removeUserDevQL,
+  ResponseRemoveUserDev,
 } from './helpers/gql'
 
 const user1 = {
@@ -40,7 +46,6 @@ describe('Users (e2e)', () => {
 
   beforeAll(async () => {
     app = await createApp()
-    await createIfNeedUser(app, user1)
     await createIfNeedUser(app, user2)
 
     const secondSigned = await loginUser(app, user2)
@@ -49,17 +54,25 @@ describe('Users (e2e)', () => {
   })
 
   afterAll(async () => {
-    const response = await removeMe(app, token)
     const responseSecond = await removeMe(app, secondToken)
-    expect(response.username).toEqual(user.username)
     expect(responseSecond.username).toEqual(secondUser.username)
     await app.close()
   })
 
   beforeEach(async () => {
+    await createIfNeedUser(app, user1)
     const signed = await loginUser(app, user1)
     user = signed.user
     token = signed.accessToken
+  })
+
+  afterEach(async () => {
+    await request<ResponseRemoveUserDev>(app.getHttpServer())
+      .mutate(removeUserDevQL)
+      .variables({
+        id: user.id,
+      })
+      .expectNoErrors()
   })
 
   it('User update', async () => {
@@ -127,5 +140,57 @@ describe('Users (e2e)', () => {
       })
 
     expectForbidden(response)
+  })
+
+  it('Change password', async () => {
+    const response = await request<ResponseChangePassword>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .mutate(changePasswordQL)
+      .variables({
+        id: user.id,
+        newPassword: 'new_password',
+        oldPassword: user1.password,
+      })
+
+    expect(response.data).not.toBeNull()
+    expect(response.data!.changePassword).toBe(true)
+  })
+
+  it('Change password should 401 non auth', async () => {
+    const response = await request<ResponseChangePassword>(app.getHttpServer())
+      .mutate(changePasswordQL)
+      .variables({
+        id: user.id,
+        newPassword: 'new_password',
+        oldPassword: user1.password,
+      })
+
+    expectUnauthorized(response)
+  })
+  it('Change password should 403', async () => {
+    const response = await request<ResponseChangePassword>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .mutate(changePasswordQL)
+      .variables({
+        id: secondUser.id,
+        newPassword: 'new_password',
+        oldPassword: user1.password,
+      })
+
+    expectForbidden(response)
+  })
+
+  it('Change password with incorrect current password should fail', async () => {
+    const response = await request<ResponseChangePassword>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .mutate(changePasswordQL)
+      .variables({
+        id: user.id,
+        newPassword: 'new_password',
+        oldPassword: "I'm not a password",
+      })
+
+    expect(response.data).toBeNull()
+    expectBadRequest(response)
   })
 })

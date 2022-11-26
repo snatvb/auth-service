@@ -156,3 +156,21 @@ export type ResponseRemoveUserDev = {
     username: string
   }
 }
+
+export const changePasswordQL = gql`
+  mutation changePassword(
+    $id: String!
+    $oldPassword: String!
+    $newPassword: String!
+  ) {
+    changePassword(
+      id: $id
+      newPassword: $newPassword
+      oldPassword: $oldPassword
+    )
+  }
+`
+
+export type ResponseChangePassword = {
+  changePassword: boolean
+}

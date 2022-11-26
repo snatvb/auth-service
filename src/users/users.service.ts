@@ -45,6 +45,27 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { username } })
   }
 
+  async changePassword(id: string, oldPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { password: true },
+    })
+    if (!user) {
+      throw new BadRequestException('User not found')
+    }
+
+    const valid = await this.validatePassword(oldPassword, user.password)
+    if (!valid) {
+      throw new BadRequestException('Invalid old password')
+    }
+
+    const password = await this.hashPassword(newPassword)
+    return this.prisma.user.update({
+      where: { id },
+      data: { password },
+    })
+  }
+
   async update(
     id: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

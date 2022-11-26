@@ -129,6 +129,12 @@ export function expectForbidden<T = unknown>(
   expect(response.errors?.[0]?.extensions.code).toBe('FORBIDDEN')
 }
 
+export function expectBadRequest<T = unknown>(
+  response: SuperTestExecutionResult<T>,
+) {
+  expect(response.errors?.[0]?.extensions.code).toBe('BAD_USER_INPUT')
+}
+
 export function expectUnauthorized<T = unknown>(
   response: SuperTestExecutionResult<T>,
 ) {
