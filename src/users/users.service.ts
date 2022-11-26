@@ -1,3 +1,4 @@
+import { VerificationService } from './../verification/verification.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
 import { CreateUserInput } from './dto/create-user.input'
@@ -6,7 +7,10 @@ import { User } from '@prisma/client'
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly verification: VerificationService,
+  ) {}
 
   async create(createUserInput: CreateUserInput) {
     const password = await this.hashPassword(createUserInput.password)
@@ -120,6 +124,18 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id },
       data: { roles: { set: [...user.roles, role] } },
+    })
+  }
+
+  async verifyEmail(token: string) {
+    const payload = await this.verification.verify(token)
+    if (!payload) {
+      throw new BadRequestException('Invalid token')
+    }
+
+    return this.prisma.user.update({
+      where: { id: payload.userId, email: payload.email },
+      data: { emailVerified: true },
     })
   }
 }

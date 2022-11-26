@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
 import { ConfigModule } from '@nestjs/config'
 import { validationSchema } from './config'
+import { VerificationModule } from './verification/verification.module'
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { validationSchema } from './config'
     UsersModule,
     PrismaModule,
     AuthModule,
+    VerificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
