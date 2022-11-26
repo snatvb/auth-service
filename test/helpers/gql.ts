@@ -174,3 +174,31 @@ export const changePasswordQL = gql`
 export type ResponseChangePassword = {
   changePassword: boolean
 }
+
+export const issueEmailVerifyTokenDevQL = gql`
+  mutation issueEmailVerifyToken__dev($id: String!) {
+    issueEmailVerifyToken: issueEmailVerifyToken__dev(id: $id)
+  }
+`
+
+export type ResponseIssueEmailVerifyTokenDev = {
+  issueEmailVerifyToken: string
+}
+
+export const verifyEmailQL = gql`
+  mutation verifyEmail($token: String!) {
+    verifyEmail(token: $token) {
+      id
+      email
+      emailVerified
+    }
+  }
+`
+
+export type ResponseVerifyEmail = {
+  verifyEmail: {
+    id: string
+    email: string
+    emailVerified: boolean
+  }
+}

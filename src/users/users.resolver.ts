@@ -70,4 +70,9 @@ export class UsersResolver {
       .changePassword(id, oldPassword, newPassword)
       .then(() => true)
   }
+
+  @Mutation(() => UserEntity)
+  verifyEmail(@Args('token') token: string): Promise<User> {
+    return this.users.verifyEmail(token)
+  }
 }

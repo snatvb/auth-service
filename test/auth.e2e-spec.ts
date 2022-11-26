@@ -9,6 +9,7 @@ import {
   removeMe,
   expectNotFound,
   expectUnauthorized,
+  expectBadRequest,
 } from './helpers'
 import { hashToken } from '~/auth/auth.service'
 import {
@@ -17,6 +18,10 @@ import {
   sessionsQL,
   terminateSessionQL,
   signOutQL,
+  issueEmailVerifyTokenDevQL,
+  ResponseIssueEmailVerifyTokenDev,
+  ResponseVerifyEmail,
+  verifyEmailQL,
 } from './helpers/gql'
 
 const user1 = {
@@ -175,6 +180,35 @@ describe('Auth (e2e)', () => {
 
     expect(response.data).toBeNull()
     expectForbidden(response)
+  })
+
+  it('Verify email', async () => {
+    const responseIssueDev = await request<ResponseIssueEmailVerifyTokenDev>(
+      app.getHttpServer(),
+    )
+      .mutate(issueEmailVerifyTokenDevQL)
+      .variables({ id: user.id })
+      .expectNoErrors()
+
+    const responseVerify = await request<ResponseVerifyEmail>(
+      app.getHttpServer(),
+    )
+      .mutate(verifyEmailQL)
+      .variables({ token: responseIssueDev.data!.issueEmailVerifyToken })
+
+    expect(responseVerify.data).not.toBeNull()
+    expect(responseVerify.data!.verifyEmail.id).toBe(user.id)
+    expect(responseVerify.data!.verifyEmail.emailVerified).toBe(true)
+  })
+
+  it('Verify email with invalid token should failure', async () => {
+    const responseVerify = await request<ResponseVerifyEmail>(
+      app.getHttpServer(),
+    )
+      .mutate(verifyEmailQL)
+      .variables({ token: 'any' })
+
+    expectBadRequest(responseVerify)
   })
 
   function signOut(bearerToken = token) {

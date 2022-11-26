@@ -134,7 +134,7 @@ export class UsersService {
     }
 
     return this.prisma.user.update({
-      where: { id: payload.userId, email: payload.email },
+      where: { id: payload.userId },
       data: { emailVerified: true },
     })
   }
