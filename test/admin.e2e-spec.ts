@@ -3,7 +3,12 @@ import request from 'supertest-graphql'
 import gql from 'graphql-tag'
 import { UserEntity } from '~/users/entities/user.entity'
 import { createApp, recreateUser, loginUser, removeMe } from './helpers'
-import { refreshQL, RefreshResponse } from './helpers/gql'
+import {
+  refreshQL,
+  RefreshResponse,
+  ResponseUpdateFullUser,
+  updateFullUserQL,
+} from './helpers/gql'
 
 const adminUser1 = {
   username: 'admin_tester',
@@ -114,6 +119,31 @@ describe('Users admin (e2e)', () => {
     expect(response.data).not.toBeNull()
     const users = response.data!.users
     expect(users.length).toBeGreaterThan(0)
+  })
+
+  it('Update full user', async () => {
+    const newUpdatedFields = {
+      username: 'new_username',
+      email: 'new_username_email@rrrr.rr',
+      avatar: 'new_avatar',
+      emailVerified: true,
+    }
+    const response = await request<ResponseUpdateFullUser>(app.getHttpServer())
+      .set('Authorization', `Bearer ${adminToken}`)
+      .mutate(updateFullUserQL)
+      .variables({
+        id: user.id,
+        input: newUpdatedFields,
+      })
+      .expectNoErrors()
+
+    expect(response.data).not.toBeNull()
+    const updated = response.data!.updateFullUser
+    expect(updated.username).toEqual(newUpdatedFields.username)
+    expect(updated.email).toEqual(newUpdatedFields.email)
+    expect(updated.avatar).toEqual(newUpdatedFields.avatar)
+    expect(updated.emailVerified).toEqual(newUpdatedFields.emailVerified)
+    user = { ...user, ...newUpdatedFields }
   })
 })
 

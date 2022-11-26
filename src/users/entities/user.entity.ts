@@ -11,6 +11,9 @@ export class UserEntity {
   @Field()
   email: string
 
+  @Field()
+  emailVerified: boolean
+
   @Field({ nullable: true })
   avatar?: string
 

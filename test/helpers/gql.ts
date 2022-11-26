@@ -116,3 +116,27 @@ export type ResponseUpdateUser = {
     updatedAt: string
   }
 }
+
+export const updateFullUserQL = gql`
+  mutation updateFullUser($id: String!, $input: FullUpdateUserInput!) {
+    updateFullUser(id: $id, input: $input) {
+      id
+      email
+      emailVerified
+      avatar
+      username
+      updatedAt
+    }
+  }
+`
+
+export type ResponseUpdateFullUser = {
+  updateFullUser: {
+    id: string
+    email: string
+    emailVerified: boolean
+    avatar: string
+    username: string
+    updatedAt: Date
+  }
+}

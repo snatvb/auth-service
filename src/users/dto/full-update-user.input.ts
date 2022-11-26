@@ -6,6 +6,9 @@ export class FullUpdateUserInput extends PartialType(UpdateUserInput) {
   @Field({ nullable: true })
   username: string
 
+  @Field({ nullable: true })
+  email: string
+
   @Field(() => [String], { nullable: true })
   roles: string[]
 
