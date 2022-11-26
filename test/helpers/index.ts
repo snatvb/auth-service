@@ -14,7 +14,7 @@ const createUserQL = gql`
     }
   }
 `
-export async function recreateUser(
+export async function createIfNeedUser(
   app: INestApplication,
   user: { username: string; password: string; email: string },
 ) {

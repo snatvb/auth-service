@@ -2,10 +2,18 @@ import { INestApplication } from '@nestjs/common'
 import request from 'supertest-graphql'
 import gql from 'graphql-tag'
 import { UserEntity } from '~/users/entities/user.entity'
-import { createApp, recreateUser, loginUser, removeMe } from './helpers'
+import {
+  createApp,
+  createIfNeedUser,
+  loginUser,
+  removeMe,
+  expectForbidden,
+} from './helpers'
 import {
   refreshQL,
   RefreshResponse,
+  removeUserDevQL,
+  ResponseRemoveUserDev,
   ResponseUpdateFullUser,
   updateFullUserQL,
 } from './helpers/gql'
@@ -69,8 +77,8 @@ describe('Users admin (e2e)', () => {
 
   beforeAll(async () => {
     app = await createApp()
-    await recreateUser(app, user1)
-    await recreateUser(app, adminUser1)
+    await createIfNeedUser(app, user1)
+    await createIfNeedUser(app, adminUser1)
 
     const signedAdmin = await loginUser(app, adminUser1)
     adminUser = signedAdmin.user
@@ -93,17 +101,25 @@ describe('Users admin (e2e)', () => {
   })
 
   afterAll(async () => {
-    const response = await removeMe(app, token)
     const responseAdmin = await removeMe(app, adminToken)
-    expect(response.username).toEqual(user.username)
     expect(responseAdmin.username).toEqual(adminUser.username)
     await app.close()
   })
 
   beforeEach(async () => {
+    await createIfNeedUser(app, user1)
     const signed = await loginUser(app, user1)
     user = signed.user
     token = signed.accessToken
+  })
+
+  afterEach(async () => {
+    await request<ResponseRemoveUserDev>(app.getHttpServer())
+      .mutate(removeUserDevQL)
+      .variables({
+        id: user.id,
+      })
+      .expectNoErrors()
   })
 
   it('Get users by admin', async () => {
@@ -143,7 +159,22 @@ describe('Users admin (e2e)', () => {
     expect(updated.email).toEqual(newUpdatedFields.email)
     expect(updated.avatar).toEqual(newUpdatedFields.avatar)
     expect(updated.emailVerified).toEqual(newUpdatedFields.emailVerified)
-    user = { ...user, ...newUpdatedFields }
+  })
+
+  it('Update full user should be failure', async () => {
+    const newUpdatedFields = {
+      username: 'new_username',
+    }
+    const response = await request<ResponseUpdateFullUser>(app.getHttpServer())
+      .set('Authorization', `Bearer ${token}`)
+      .mutate(updateFullUserQL)
+      .variables({
+        id: user.id,
+        input: newUpdatedFields,
+      })
+
+    expect(response.data).toBeNull()
+    expectForbidden(response)
   })
 })
 

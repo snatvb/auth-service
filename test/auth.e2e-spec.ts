@@ -3,7 +3,7 @@ import request from 'supertest-graphql'
 import { UserEntity } from '~/users/entities/user.entity'
 import {
   createApp,
-  recreateUser,
+  createIfNeedUser,
   expectForbidden,
   loginUser,
   removeMe,
@@ -44,8 +44,8 @@ describe('Auth (e2e)', () => {
 
   beforeAll(async () => {
     app = await createApp()
-    await recreateUser(app, user1)
-    await recreateUser(app, user2)
+    await createIfNeedUser(app, user1)
+    await createIfNeedUser(app, user2)
     const secondSigned = await loginUser(app, user2)
     secondUser = secondSigned.user
     secondToken = secondSigned.accessToken

@@ -13,4 +13,9 @@ export class UsersDevResolver {
   promoteRole__dev(@Args('id') id: string, @Args('role') role: string) {
     return this.users.promoteRole(id, role)
   }
+
+  @Mutation(() => UserEntity)
+  removeUser__dev(@Args('id') id: string) {
+    return this.users.remove(id)
+  }
 }

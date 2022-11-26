@@ -140,3 +140,19 @@ export type ResponseUpdateFullUser = {
     updatedAt: Date
   }
 }
+
+export const removeUserDevQL = gql`
+  mutation removeUser($id: String!) {
+    removeUser: removeUser__dev(id: $id) {
+      id
+      username
+    }
+  }
+`
+
+export type ResponseRemoveUserDev = {
+  removeUser: {
+    id: string
+    username: string
+  }
+}
