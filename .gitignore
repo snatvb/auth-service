@@ -4,6 +4,9 @@
 /data
 src/schema.gql
 
+# env
+config/env/development.env
+
 # Logs
 logs
 *.log

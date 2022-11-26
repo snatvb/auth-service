@@ -3,7 +3,7 @@ import { TestingModule, Test } from '@nestjs/testing'
 import gql from 'graphql-tag'
 import { AppModule } from '~/app.module'
 import request, { SuperTestExecutionResult } from 'supertest-graphql'
-import { User } from '~/users/entities/user.entity'
+import { UserEntity } from '~/users/entities/user.entity'
 import { ResponseUpdateUser, updateUserQL } from './gql'
 
 const createUserQL = gql`
@@ -38,7 +38,7 @@ export function loginUser(
   user: { username: string; password: string },
 ) {
   return request<{
-    signIn: { user: User; accessToken: string; refreshToken: string }
+    signIn: { user: UserEntity; accessToken: string; refreshToken: string }
   }>(app.getHttpServer())
     .mutate(
       gql`

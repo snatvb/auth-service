@@ -8,6 +8,7 @@ import { AppService } from './app.service'
 import { UsersModule } from './users/users.module'
 import { AuthModule } from './auth/auth.module'
 import { ConfigModule } from '@nestjs/config'
+import { validationSchema } from './config'
 
 @Module({
   imports: [
@@ -19,7 +20,9 @@ import { ConfigModule } from '@nestjs/config'
       sortSchema: true,
     }),
     ConfigModule.forRoot({
+      envFilePath: `${process.cwd()}/config/env/${process.env.NODE_ENV}.env`,
       isGlobal: true,
+      validationSchema,
     }),
     UsersModule,
     PrismaModule,

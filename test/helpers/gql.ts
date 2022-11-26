@@ -1,5 +1,5 @@
 import gql from 'graphql-tag'
-import { User } from '~/users/entities/user.entity'
+import { UserEntity } from '~/users/entities/user.entity'
 
 export const refreshQL = gql`
   mutation refresh($refreshToken: String!) {
@@ -19,7 +19,7 @@ export type RefreshResponse = {
   refresh: {
     accessToken: string
     refreshToken: string
-    user: Pick<User, 'id' | 'username' | 'roles'>
+    user: Pick<UserEntity, 'id' | 'username' | 'roles'>
   }
 }
 

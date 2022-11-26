@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common'
 import request from 'supertest-graphql'
-import { User } from '~/users/entities/user.entity'
+import { UserEntity } from '~/users/entities/user.entity'
 import {
   createApp,
   recreateUser,
@@ -32,10 +32,10 @@ const user2 = {
 describe('Users (e2e)', () => {
   let app: INestApplication
 
-  let user: User
+  let user: UserEntity
   let token: string
 
-  let secondUser: User
+  let secondUser: UserEntity
   let secondToken: string
 
   beforeAll(async () => {

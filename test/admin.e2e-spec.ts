@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common'
 import request from 'supertest-graphql'
 import gql from 'graphql-tag'
-import { User } from '~/users/entities/user.entity'
+import { UserEntity } from '~/users/entities/user.entity'
 import { createApp, recreateUser, loginUser, removeMe } from './helpers'
 import { refreshQL, RefreshResponse } from './helpers/gql'
 
@@ -56,10 +56,10 @@ type ResponsePromoteRoleDevQuery = {
 describe('Users admin (e2e)', () => {
   let app: INestApplication
 
-  let user: Pick<User, 'id' | 'username' | 'roles'>
+  let user: Pick<UserEntity, 'id' | 'username' | 'roles'>
   let token: string
 
-  let adminUser: Pick<User, 'id' | 'username' | 'roles'>
+  let adminUser: Pick<UserEntity, 'id' | 'username' | 'roles'>
   let adminToken: string
 
   beforeAll(async () => {
