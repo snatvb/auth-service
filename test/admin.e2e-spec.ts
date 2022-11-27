@@ -8,6 +8,7 @@ import {
   loginUser,
   removeMe,
   expectForbidden,
+  removeUsersByUsernames,
 } from './helpers'
 import {
   refreshQL,
@@ -28,6 +29,12 @@ const user1 = {
   username: 'non_admin_tester',
   password: 'non_admin_tester_pass',
   email: 'non_admin_tester@ete2.com',
+}
+const newUpdatedFields = {
+  username: 'new_username',
+  email: 'new_username_email@rrrr.rr',
+  avatar: 'new_avatar',
+  emailVerified: true,
 }
 
 const usersQL = gql`
@@ -77,7 +84,11 @@ describe('Users admin (e2e)', () => {
 
   beforeAll(async () => {
     app = await createApp()
-    await signUp(app, user1)
+    await removeUsersByUsernames(app, [
+      adminUser1.username,
+      user1.username,
+      newUpdatedFields.username,
+    ])
     await signUp(app, adminUser1)
 
     const signedAdmin = await loginUser(app, adminUser1)
@@ -138,12 +149,6 @@ describe('Users admin (e2e)', () => {
   })
 
   it('Update full user', async () => {
-    const newUpdatedFields = {
-      username: 'new_username',
-      email: 'new_username_email@rrrr.rr',
-      avatar: 'new_avatar',
-      emailVerified: true,
-    }
     const response = await request<ResponseUpdateFullUser>(app.getHttpServer())
       .set('Authorization', `Bearer ${adminToken}`)
       .mutate(updateFullUserQL)

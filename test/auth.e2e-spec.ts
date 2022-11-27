@@ -10,6 +10,7 @@ import {
   expectNotFound,
   expectUnauthorized,
   expectBadRequest,
+  removeUsersByUsernames,
 } from './helpers'
 import { hashToken } from '~/auth/auth.service'
 import {
@@ -64,6 +65,7 @@ describe('Auth (e2e)', () => {
 
   beforeAll(async () => {
     app = await createApp()
+    await removeUsersByUsernames(app, [user1.username, user2.username])
     await signUp(app, user2)
     const secondSigned = await loginUser(app, user2)
     secondUser = secondSigned.user

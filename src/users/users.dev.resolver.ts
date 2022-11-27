@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common'
-import { Args, Mutation, Resolver } from '@nestjs/graphql'
+import { Args, Int, Mutation, Resolver } from '@nestjs/graphql'
 import { VerificationService } from '~/verification/verification.service'
 import { UserEntity } from './entities/user.entity'
 import { UsersService } from './users.service'
@@ -19,6 +19,13 @@ export class UsersDevResolver {
   @Mutation(() => UserEntity)
   removeUser__dev(@Args('id') id: string) {
     return this.users.remove(id)
+  }
+
+  @Mutation(() => Int)
+  removeUsersByUsernames__dev(
+    @Args('usernames', { type: () => [String] }) usernames: string[],
+  ): Promise<number> {
+    return this.users.removeByUsernames(usernames)
   }
 
   @Mutation(() => String)

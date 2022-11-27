@@ -126,6 +126,16 @@ export class UsersService {
     return this.prisma.user.delete({ where: { id } })
   }
 
+  removeByUsernames(usernames: string[]) {
+    return this.prisma.user
+      .deleteMany({ where: { username: { in: usernames } } })
+      .then((res) => res.count)
+      .catch(() => {
+        console.log('error')
+        throw new BadRequestException('Error deleting users')
+      })
+  }
+
   hashPassword(password: string) {
     return bcrypt.hash(password, 10)
   }

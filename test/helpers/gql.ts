@@ -170,6 +170,16 @@ export type ResponseRemoveUserDev = {
   }
 }
 
+export const removeUsersByUsernamesDevQL = gql`
+  mutation removeUsersByUsernames__dev($usernames: [String!]!) {
+    removeByUsernames: removeUsersByUsernames__dev(usernames: $usernames)
+  }
+`
+
+export type ResponseRemoveUsersByUsernames = {
+  removeByUsernames: number
+}
+
 export const changePasswordQL = gql`
   mutation changePassword(
     $id: String!

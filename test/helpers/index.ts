@@ -5,6 +5,8 @@ import { AppModule } from '~/app.module'
 import request, { SuperTestExecutionResult } from 'supertest-graphql'
 import { UserEntity } from '~/users/entities/user.entity'
 import {
+  removeUsersByUsernamesDevQL,
+  ResponseRemoveUsersByUsernames,
   ResponseSignUp,
   ResponseUpdateUser,
   signUpQL,
@@ -158,4 +160,16 @@ export function updateUser(
         avatar: 'https://example.com/avatar.png',
       },
     })
+}
+
+export function removeUsersByUsernames(
+  app: INestApplication,
+  usernames: Array<UserEntity['username']>,
+) {
+  return request<ResponseRemoveUsersByUsernames>(app.getHttpServer())
+    .mutate(removeUsersByUsernamesDevQL)
+    .variables({
+      usernames,
+    })
+    .expectNoErrors()
 }
