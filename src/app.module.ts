@@ -12,6 +12,7 @@ import { validationSchema } from './config'
 import { VerificationModule } from './verification/verification.module'
 import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter'
 import { MailerModule, MailerOptions } from '@nestjs-modules/mailer'
+import { EmailModule } from './email/email.module'
 
 @Module({
   imports: [
@@ -44,7 +45,7 @@ import { MailerModule, MailerOptions } from '@nestjs-modules/mailer'
             from: config.getOrThrow<string>('MAILER_FROM'),
           },
           template: {
-            dir: __dirname + '/templates',
+            dir: process.cwd() + '/templates/mail',
             adapter: new PugAdapter(),
             options: {
               strict: true,
@@ -57,6 +58,7 @@ import { MailerModule, MailerOptions } from '@nestjs-modules/mailer'
     PrismaModule,
     AuthModule,
     VerificationModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
