@@ -70,6 +70,24 @@ export class UsersService {
     })
   }
 
+  async recoveryPassword(token: string, password: string): Promise<User> {
+    const payload = await this.verification.verifyPassword(token)
+    if (!payload) {
+      throw new BadRequestException('Invalid token')
+    }
+
+    const user = await this.findOne(payload.userId)
+    if (!user) {
+      throw new BadRequestException(`User with id ${payload.userId} not found`)
+    }
+
+    const hashedPassword = await this.hashPassword(password)
+    return this.prisma.user.update({
+      where: { id: payload.userId },
+      data: { password: hashedPassword },
+    })
+  }
+
   async update(
     id: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -128,7 +146,7 @@ export class UsersService {
   }
 
   async verifyEmail(token: string) {
-    const payload = await this.verification.verify(token)
+    const payload = await this.verification.verifyEmail(token)
     if (!payload) {
       throw new BadRequestException('Invalid token')
     }

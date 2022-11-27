@@ -27,6 +27,15 @@ export class UsersDevResolver {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`)
     }
-    return this.verification.issueToken(user.id, user.email)
+    return this.verification.issueEmailToken(user.id, user.email)
+  }
+
+  @Mutation(() => String)
+  async issuePasswordVerifyToken__dev(@Args('id') id: string): Promise<string> {
+    const user = await this.users.findOne(id)
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`)
+    }
+    return this.verification.issuePasswordToken(user.id)
   }
 }

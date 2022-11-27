@@ -9,4 +9,5 @@ async function bootstrap() {
   await prismaService.enableShutdownHooks(app)
   await app.listen(app.get(ConfigService).getOrThrow<number>('PORT'))
 }
+
 bootstrap()

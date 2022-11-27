@@ -3,54 +3,98 @@ import { ConfigService } from '@nestjs/config'
 import { Injectable } from '@nestjs/common'
 import * as Joi from 'joi'
 
-const tokenPayloadSchema = Joi.object({
+const tokenEmailSchema = Joi.object({
   userId: Joi.string().required(),
   email: Joi.string().required(),
 })
 
-export type TokenPayload = {
+const tokenPasswordSchema = Joi.object({
+  email: Joi.string().required(),
+})
+
+export type TokenEmailPayload = {
   userId: string
   email: string
 }
 
+export type TokenRecoveryPayload = {
+  userId: string
+}
+
 @Injectable()
 export class VerificationService {
-  private secret: string
-  private expiresIn: string
+  private email: {
+    secret: string
+    expiresIn: string
+  }
+  private password: {
+    secret: string
+    expiresIn: string
+  }
+
   constructor(
     private readonly config: ConfigService,
     private readonly jwt: JwtService,
   ) {
-    this.secret = this.config.getOrThrow<string>('JWT_EMAIL_SECRET')
-    this.expiresIn = this.config.getOrThrow<string>('JWT_EMAIL_EXPIRES')
+    this.email = {
+      secret: this.config.getOrThrow('JWT_EMAIL_SECRET'),
+      expiresIn: this.config.getOrThrow('JWT_EMAIL_EXPIRES'),
+    }
+    this.password = {
+      secret: this.config.getOrThrow('JWT_RECOVERY_SECRET'),
+      expiresIn: this.config.getOrThrow('JWT_RECOVERY_EXPIRES'),
+    }
   }
-  async sendVerificationEmail(userId: string, email: string): Promise<string> {
+  async sendVerificationEmail(userId: string, email: string): Promise<boolean> {
     // TODO: send email
-    return this.issueToken(userId, email)
+    this.issueEmailToken(userId, email)
+    return true
   }
 
-  issueToken(userId: string, email: string) {
+  issueEmailToken(userId: string, email: string) {
     const token = this.jwt.sign(
       { userId, email },
-      { secret: this.secret, expiresIn: this.expiresIn },
+      { secret: this.email.secret, expiresIn: this.email.expiresIn },
     )
 
     return token
   }
 
-  async verify(token: string): Promise<TokenPayload | void> {
-    try {
-      const payload = await this.jwt.verify(token, {
-        secret: this.secret,
-      })
+  issuePasswordToken(userId: string) {
+    const token = this.jwt.sign(
+      { userId },
+      { secret: this.password.secret, expiresIn: this.password.expiresIn },
+    )
 
-      if (Joi.valid(payload, tokenPayloadSchema)) {
+    return token
+  }
+
+  async verifyPassword(token: string): Promise<TokenEmailPayload | void> {
+    try {
+      const payload = await this.jwt.verifyAsync(token, {
+        secret: this.password.secret,
+      })
+      if (tokenPasswordSchema.valid(payload)) {
         return payload
       }
+      return undefined
     } catch (error) {
       return undefined
     }
+  }
 
-    return undefined
+  async verifyEmail(token: string): Promise<TokenEmailPayload | void> {
+    try {
+      const payload = await this.jwt.verify(token, {
+        secret: this.email.secret,
+      })
+
+      if (Joi.valid(payload, tokenEmailSchema)) {
+        return payload
+      }
+      return undefined
+    } catch (error) {
+      return undefined
+    }
   }
 }
