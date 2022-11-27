@@ -4,7 +4,7 @@ import gql from 'graphql-tag'
 import { UserEntity } from '~/users/entities/user.entity'
 import {
   createApp,
-  createIfNeedUser,
+  signUp,
   loginUser,
   removeMe,
   expectForbidden,
@@ -77,8 +77,8 @@ describe('Users admin (e2e)', () => {
 
   beforeAll(async () => {
     app = await createApp()
-    await createIfNeedUser(app, user1)
-    await createIfNeedUser(app, adminUser1)
+    await signUp(app, user1)
+    await signUp(app, adminUser1)
 
     const signedAdmin = await loginUser(app, adminUser1)
     adminUser = signedAdmin.user
@@ -107,7 +107,7 @@ describe('Users admin (e2e)', () => {
   })
 
   beforeEach(async () => {
-    await createIfNeedUser(app, user1)
+    await signUp(app, user1)
     const signed = await loginUser(app, user1)
     user = signed.user
     token = signed.accessToken

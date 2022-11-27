@@ -1,6 +1,19 @@
 import gql from 'graphql-tag'
 import { UserEntity } from '~/users/entities/user.entity'
 
+export const createUserQL = gql`
+  mutation createUser($input: CreateUserInput!) {
+    createUser(createUserInput: $input) {
+      id
+      username
+    }
+  }
+`
+
+export type ResponseCreateUser = {
+  createUser: { id: string; username: string }
+}
+
 export const refreshQL = gql`
   mutation refresh($refreshToken: String!) {
     refresh(refreshToken: $refreshToken) {
@@ -237,4 +250,38 @@ export const requestRecoveryPasswordQL = gql`
 
 export type ResponseRequestRecoveryPassword = {
   requestRecoveryPassword: boolean
+}
+
+export const signUpQL = gql`
+  mutation signUp($input: SignUpInput!) {
+    signUp(signUpInput: $input) {
+      id
+      email
+      emailVerified
+      avatar
+      username
+      updatedAt
+    }
+  }
+`
+
+export type ResponseSignUp = {
+  signUp: {
+    id: string
+    email: string
+    emailVerified: boolean
+    avatar: string
+    username: string
+    updatedAt: Date
+  }
+}
+
+export const resendVerificationQL = gql`
+  query resendVerification($email: String!) {
+    resendVerification(email: $email)
+  }
+`
+
+export type ResponseResendVerification = {
+  resendVerification: boolean
 }

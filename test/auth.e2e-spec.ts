@@ -3,7 +3,7 @@ import request from 'supertest-graphql'
 import { UserEntity } from '~/users/entities/user.entity'
 import {
   createApp,
-  createIfNeedUser,
+  signUp,
   expectForbidden,
   loginUser,
   removeMe,
@@ -33,10 +33,8 @@ import {
   requestRecoveryPasswordQL,
   ResponseRequestRecoveryPassword,
 } from './helpers/gql'
-import { EmailService } from '~/email/email.service'
 import {
   clearSentEmailHistory,
-  EmailMockService,
   getSentEmailHistory,
 } from './helpers/EmailMockService'
 import { U } from '~/helpers'
@@ -66,7 +64,7 @@ describe('Auth (e2e)', () => {
 
   beforeAll(async () => {
     app = await createApp()
-    await createIfNeedUser(app, user2)
+    await signUp(app, user2)
     const secondSigned = await loginUser(app, user2)
     secondUser = secondSigned.user
     secondToken = secondSigned.accessToken
@@ -80,7 +78,7 @@ describe('Auth (e2e)', () => {
   })
 
   beforeEach(async () => {
-    await createIfNeedUser(app, user1)
+    await signUp(app, user1)
     const signed = await loginUser(app, user1)
     user = signed.user
     token = signed.accessToken
@@ -352,7 +350,7 @@ describe('Auth (e2e)', () => {
     expect(response.data).not.toBeNull()
     expect(response.data!.requestRecoveryPassword).toBe(true)
 
-    const sent = getSentEmailHistory()[0]
+    const sent = U.array.last(getSentEmailHistory())
     expect(sent.to).toBe(user1.email)
     expect(sent.data!.username).toBe(user1.username)
     clearSentEmailHistory()

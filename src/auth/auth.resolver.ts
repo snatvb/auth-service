@@ -9,6 +9,7 @@ import { RefreshResponse } from './dto/refresh.response'
 import { Token } from './enitities/token.entity'
 import { UserEntity } from '~/users/entities/user.entity'
 import { User } from '@prisma/client'
+import { SignUpInput } from './dto/sign-up.input'
 
 @Resolver()
 export class AuthResolver {
@@ -21,6 +22,16 @@ export class AuthResolver {
     @Context() context: GqlAuthContext,
   ) {
     return this.service.signIn(context.user.username)
+  }
+
+  @Mutation(() => UserEntity)
+  signUp(@Args('signUpInput') input: SignUpInput) {
+    return this.service.signUp(input)
+  }
+
+  @Query(() => Boolean)
+  resendVerification(@Args('userId') userId: string) {
+    return this.service.resendVerification(userId)
   }
 
   @Mutation(() => Boolean)

@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt'
 import { User } from '@prisma/client'
 import { PrismaService } from 'prisma/prisma.service'
 import { randomBytes, createHash } from 'crypto'
+import { SignUpInput } from './dto/sign-up.input'
 
 @Injectable()
 export class AuthService {
@@ -26,6 +27,22 @@ export class AuthService {
       return prepareUser(user)
     }
     return null
+  }
+
+  async signUp(input: SignUpInput) {
+    const user = await this.users.create(input)
+    await this.sendVerificationEmail(user)
+    return user
+  }
+
+  async resendVerification(userId: string): Promise<boolean> {
+    const user = await this.users.findOne(userId)
+
+    if (!user) {
+      throw new BadRequestException(`User with email ${userId} not found`)
+    }
+
+    return this.sendVerificationEmail(user)
   }
 
   async signOut(refreshToken: string) {
@@ -77,6 +94,14 @@ export class AuthService {
       refreshToken,
       user,
     }
+  }
+
+  private sendVerificationEmail(user: Pick<User, 'id' | 'email' | 'username'>) {
+    return this.verification.sendVerificationEmail({
+      email: user.email,
+      userId: user.id,
+      username: user.username,
+    })
   }
 
   private async issueToken(username: string) {

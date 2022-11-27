@@ -23,7 +23,13 @@ export type TokenRecoveryPayload = {
   userId: string
 }
 
-export type sendRecoveryPasswordArgs = {
+export type SendRecoveryPasswordArgs = {
+  email: string
+  userId: string
+  username: string
+}
+
+export type SendEmailVerificationArgs = {
   email: string
   userId: string
   username: string
@@ -64,10 +70,29 @@ export class VerificationService {
       appName: this.config.getOrThrow<string>('MAILER_APP_NAME'),
     }
   }
-  async sendVerificationEmail(userId: string, email: string): Promise<boolean> {
-    // TODO: send email
-    this.issueEmailToken(userId, email)
-    return true
+  async sendVerificationEmail({
+    email,
+    userId,
+    username,
+  }: SendEmailVerificationArgs): Promise<boolean> {
+    const token = this.issueEmailToken(userId, email)
+
+    return await this.email
+      .sendEmail({
+        to: email,
+        subject: 'Email verification',
+        templateName: 'verify-email',
+        data: {
+          token,
+          username,
+          link: t.renderText(this.cfg.passwordRecoveryLinkTemplate, {
+            token,
+          }),
+          appName: this.cfg.appName,
+        },
+      })
+      .then(() => true)
+      .catch(() => false)
   }
 
   issueEmailToken(userId: string, email: string) {
@@ -117,8 +142,8 @@ export class VerificationService {
     userId,
     username,
     email,
-  }: sendRecoveryPasswordArgs): Promise<boolean> {
-    const token = await this.issuePasswordToken(userId)
+  }: SendRecoveryPasswordArgs): Promise<boolean> {
+    const token = this.issuePasswordToken(userId)
     return await this.email
       .sendEmail({
         to: email,

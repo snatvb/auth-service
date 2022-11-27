@@ -4,33 +4,25 @@ import gql from 'graphql-tag'
 import { AppModule } from '~/app.module'
 import request, { SuperTestExecutionResult } from 'supertest-graphql'
 import { UserEntity } from '~/users/entities/user.entity'
-import { ResponseUpdateUser, updateUserQL } from './gql'
+import {
+  ResponseSignUp,
+  ResponseUpdateUser,
+  signUpQL,
+  updateUserQL,
+} from './gql'
 import { EmailService } from '~/email/email.service'
 import { EmailMockService } from './EmailMockService'
 
-const createUserQL = gql`
-  mutation createUser($input: CreateUserInput!) {
-    createUser(createUserInput: $input) {
-      id
-      username
-    }
-  }
-`
-export async function createIfNeedUser(
+export async function signUp(
   app: INestApplication,
   user: { username: string; password: string; email: string },
 ) {
-  const result = await request<{
-    createUser: { id: string; username: string }
-  }>(app.getHttpServer())
-    .mutate(createUserQL)
+  const result = await request<ResponseSignUp>(app.getHttpServer())
+    .mutate(signUpQL)
     .variables({
       input: user,
     })
-
-  if (result.errors && result.errors[0].message === 'User already exists') {
-    return
-  }
+    .expectNoErrors()
 
   return result
 }
