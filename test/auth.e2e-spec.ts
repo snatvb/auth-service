@@ -18,8 +18,6 @@ import {
   sessionsQL,
   terminateSessionQL,
   signOutQL,
-  issueEmailVerifyTokenDevQL,
-  ResponseIssueEmailVerifyTokenDev,
   ResponseVerifyEmail,
   verifyEmailQL,
   changePasswordQL,
@@ -32,6 +30,8 @@ import {
   ResponseRemoveUserDev,
   requestRecoveryPasswordQL,
   ResponseRequestRecoveryPassword,
+  ResponseResendVerification,
+  resendVerificationQL,
 } from './helpers/gql'
 import {
   clearSentEmailHistory,
@@ -205,18 +205,35 @@ describe('Auth (e2e)', () => {
   })
 
   it('Verify email', async () => {
-    const responseIssueDev = await request<ResponseIssueEmailVerifyTokenDev>(
-      app.getHttpServer(),
-    )
-      .mutate(issueEmailVerifyTokenDevQL)
-      .variables({ id: user.id })
-      .expectNoErrors()
-
+    const sentToken = U.array.last(getSentEmailHistory())?.data?.token
+    expect(typeof sentToken).toBe('string')
     const responseVerify = await request<ResponseVerifyEmail>(
       app.getHttpServer(),
     )
       .mutate(verifyEmailQL)
-      .variables({ token: responseIssueDev.data!.issueEmailVerifyToken })
+      .variables({ token: sentToken })
+      .expectNoErrors()
+
+    expect(responseVerify.data).not.toBeNull()
+    expect(responseVerify.data!.verifyEmail.id).toBe(user.id)
+    expect(responseVerify.data!.verifyEmail.emailVerified).toBe(true)
+  })
+
+  it('Verify email resend', async () => {
+    const response = await request<ResponseResendVerification>(
+      app.getHttpServer(),
+    )
+      .query(resendVerificationQL)
+      .variables({ userId: user.id })
+      .expectNoErrors()
+    expect(response.data?.resendVerification).toBe(true)
+
+    const sentToken = U.array.last(getSentEmailHistory())?.data?.token
+    const responseVerify = await request<ResponseVerifyEmail>(
+      app.getHttpServer(),
+    )
+      .mutate(verifyEmailQL)
+      .variables({ token: sentToken })
 
     expect(responseVerify.data).not.toBeNull()
     expect(responseVerify.data!.verifyEmail.id).toBe(user.id)
@@ -258,6 +275,7 @@ describe('Auth (e2e)', () => {
 
     expectUnauthorized(response)
   })
+
   it('Change password should 403', async () => {
     const response = await request<ResponseChangePassword>(app.getHttpServer())
       .set('Authorization', `Bearer ${token}`)

@@ -277,8 +277,8 @@ export type ResponseSignUp = {
 }
 
 export const resendVerificationQL = gql`
-  query resendVerification($email: String!) {
-    resendVerification(email: $email)
+  query resendVerification($userId: String!) {
+    resendVerification(userId: $userId)
   }
 `
 
