@@ -202,3 +202,29 @@ export type ResponseVerifyEmail = {
     emailVerified: boolean
   }
 }
+
+export const issuePasswordRecoveryTokenDevQL = gql`
+  mutation issuePasswordVerifyToken__dev($id: String!) {
+    issuePasswordRecoveryToken: issuePasswordVerifyToken__dev(id: $id)
+  }
+`
+
+export type ResponseIssuePasswordRecoveryTokenDev = {
+  issuePasswordRecoveryToken: string
+}
+
+export const recoveryPasswordQL = gql`
+  mutation recoveryPassword($token: String!, $password: String!) {
+    recoveryPassword(token: $token, password: $password) {
+      id
+      username
+    }
+  }
+`
+
+export type ResponseRecoveryPassword = {
+  recoveryPassword: {
+    id: string
+    username: string
+  }
+}

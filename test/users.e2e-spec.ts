@@ -21,6 +21,10 @@ import {
   changePasswordQL,
   removeUserDevQL,
   ResponseRemoveUserDev,
+  issuePasswordRecoveryTokenDevQL,
+  ResponseIssuePasswordRecoveryTokenDev,
+  ResponseRecoveryPassword,
+  recoveryPasswordQL,
 } from './helpers/gql'
 
 const user1 = {
@@ -188,6 +192,58 @@ describe('Users (e2e)', () => {
         id: user.id,
         newPassword: 'new_password',
         oldPassword: "I'm not a password",
+      })
+
+    expect(response.data).toBeNull()
+    expectBadRequest(response)
+  })
+
+  it('Recovery password', async () => {
+    const responseToken = await request<ResponseIssuePasswordRecoveryTokenDev>(
+      app.getHttpServer(),
+    )
+      .mutate(issuePasswordRecoveryTokenDevQL)
+      .variables({
+        id: user.id,
+      })
+      .expectNoErrors()
+
+    expect(responseToken.data).not.toBeNull()
+    const token = responseToken.data!.issuePasswordRecoveryToken
+    expect(typeof token).toBe('string')
+
+    const newPassword = 'new_password'
+    const response = await request<ResponseRecoveryPassword>(
+      app.getHttpServer(),
+    )
+      .mutate(recoveryPasswordQL)
+      .variables({
+        token,
+        password: newPassword,
+      })
+      .expectNoErrors()
+
+    expect(response.data).not.toBeNull()
+    expect(response.data!.recoveryPassword.username).toBe(user1.username)
+
+    const responseLogin = await loginUser(app, {
+      ...user1,
+      password: newPassword,
+    })
+    expect(responseLogin.user.username).toBe(user1.username)
+    expect(typeof responseLogin.accessToken).toBe('string')
+    expect(typeof responseLogin.refreshToken).toBe('string')
+  })
+
+  it('Recovery password with invalid token should fail', async () => {
+    const newPassword = 'new_password'
+    const response = await request<ResponseRecoveryPassword>(
+      app.getHttpServer(),
+    )
+      .mutate(recoveryPasswordQL)
+      .variables({
+        token: 'INVALID_TOKEN',
+        password: newPassword,
       })
 
     expect(response.data).toBeNull()

@@ -75,4 +75,12 @@ export class UsersResolver {
   verifyEmail(@Args('token') token: string): Promise<User> {
     return this.users.verifyEmail(token)
   }
+
+  @Mutation(() => UserEntity)
+  recoveryPassword(
+    @Args('token') token: string,
+    @Args('password') password: string,
+  ): Promise<User> {
+    return this.users.recoveryPassword(token, password)
+  }
 }
