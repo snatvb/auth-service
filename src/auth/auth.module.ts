@@ -1,3 +1,4 @@
+import { VerificationModule } from './../verification/verification.module'
 import { ConfigService } from '@nestjs/config'
 import { UsersModule } from './../users/users.module'
 import { Module } from '@nestjs/common'
@@ -12,6 +13,7 @@ import { JwtStrategy } from './jwt.strategy'
   imports: [
     PassportModule,
     UsersModule,
+    VerificationModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

@@ -1,4 +1,6 @@
+import { VerificationService } from '~/verification/verification.service'
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -6,7 +8,6 @@ import {
 import { UsersService } from '~/users/users.service'
 import { JwtService } from '@nestjs/jwt'
 import { User } from '@prisma/client'
-import { ConfigService } from '@nestjs/config'
 import { PrismaService } from 'prisma/prisma.service'
 import { randomBytes, createHash } from 'crypto'
 
@@ -15,7 +16,7 @@ export class AuthService {
   constructor(
     private readonly users: UsersService,
     private readonly jwt: JwtService,
-    private readonly config: ConfigService,
+    private readonly verification: VerificationService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -113,6 +114,43 @@ export class AuthService {
   async findSessions(userId: string) {
     return this.prisma.token.findMany({
       where: { userId },
+    })
+  }
+
+  async verifyEmail(token: string) {
+    const payload = await this.verification.verifyEmail(token)
+    if (!payload) {
+      throw new BadRequestException('Invalid token')
+    }
+
+    return this.users.verifyEmail(payload.userId, true)
+  }
+
+  async recoveryPassword(token: string, password: string): Promise<User> {
+    const payload = await this.verification.verifyPassword(token)
+    if (!payload) {
+      throw new BadRequestException('Invalid token')
+    }
+
+    const user = await this.users.findOne(payload.userId)
+    if (!user) {
+      throw new BadRequestException(`User with id ${payload.userId} not found`)
+    }
+
+    return await this.users.setNewPassword(user.id, password)
+  }
+
+  async sendRecoveryPasswordToken(email: string): Promise<boolean> {
+    const user = await this.users.findOneByEmail(email)
+
+    if (!user) {
+      throw new BadRequestException(`User with email ${email} not found`)
+    }
+
+    return this.verification.sendRecoveryPassword({
+      userId: user.id,
+      email: user.email,
+      username: user.username,
     })
   }
 }

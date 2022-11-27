@@ -5,6 +5,8 @@ import { AppModule } from '~/app.module'
 import request, { SuperTestExecutionResult } from 'supertest-graphql'
 import { UserEntity } from '~/users/entities/user.entity'
 import { ResponseUpdateUser, updateUserQL } from './gql'
+import { EmailService } from '~/email/email.service'
+import { EmailMockService } from './EmailMockService'
 
 const createUserQL = gql`
   mutation createUser($input: CreateUserInput!) {
@@ -72,6 +74,7 @@ export function loginUser(
 export async function createApp(): Promise<INestApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
+    providers: [{ provide: EmailService, useValue: EmailMockService }],
   }).compile()
 
   const app = moduleFixture.createNestApplication()

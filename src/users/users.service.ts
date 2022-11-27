@@ -45,6 +45,10 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { id } })
   }
 
+  findOneByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } })
+  }
+
   findOneByUsername(username: string) {
     return this.prisma.user.findUnique({ where: { username } })
   }
@@ -63,6 +67,10 @@ export class UsersService {
       throw new BadRequestException('Invalid old password')
     }
 
+    return await this.setNewPassword(id, newPassword)
+  }
+
+  async setNewPassword(id: string, newPassword: string) {
     const password = await this.hashPassword(newPassword)
     return this.prisma.user.update({
       where: { id },
@@ -145,15 +153,10 @@ export class UsersService {
     })
   }
 
-  async verifyEmail(token: string) {
-    const payload = await this.verification.verifyEmail(token)
-    if (!payload) {
-      throw new BadRequestException('Invalid token')
-    }
-
+  async verifyEmail(userId: string, emailVerified: boolean) {
     return this.prisma.user.update({
-      where: { id: payload.userId },
-      data: { emailVerified: true },
+      where: { id: userId },
+      data: { emailVerified },
     })
   }
 }
