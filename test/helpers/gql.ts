@@ -228,3 +228,13 @@ export type ResponseRecoveryPassword = {
     username: string
   }
 }
+
+export const requestRecoveryPasswordQL = gql`
+  query requestRecoveryPassword($email: String!) {
+    requestRecoveryPassword(email: $email)
+  }
+`
+
+export type ResponseRequestRecoveryPassword = {
+  requestRecoveryPassword: boolean
+}

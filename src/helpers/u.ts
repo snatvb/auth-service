@@ -1,3 +1,5 @@
+export * as array from './array'
+
 export function excludeDirty<A extends object, Key extends keyof A>(
   user: A,
   keys: Key[],

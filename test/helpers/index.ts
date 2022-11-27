@@ -74,8 +74,10 @@ export function loginUser(
 export async function createApp(): Promise<INestApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
-    providers: [{ provide: EmailService, useValue: EmailMockService }],
-  }).compile()
+  })
+    .overrideProvider(EmailService)
+    .useClass(EmailMockService)
+    .compile()
 
   const app = moduleFixture.createNestApplication()
   await app.init()

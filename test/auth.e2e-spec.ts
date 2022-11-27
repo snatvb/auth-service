@@ -30,7 +30,16 @@ import {
   ResponseRecoveryPassword,
   removeUserDevQL,
   ResponseRemoveUserDev,
+  requestRecoveryPasswordQL,
+  ResponseRequestRecoveryPassword,
 } from './helpers/gql'
+import { EmailService } from '~/email/email.service'
+import {
+  clearSentEmailHistory,
+  EmailMockService,
+  getSentEmailHistory,
+} from './helpers/EmailMockService'
+import { U } from '~/helpers'
 
 const user1 = {
   username: 'e2e_tester',
@@ -328,6 +337,25 @@ describe('Auth (e2e)', () => {
 
     expect(response.data).toBeNull()
     expectBadRequest(response)
+  })
+
+  it('Request recovery password', async () => {
+    const response = await request<ResponseRequestRecoveryPassword>(
+      app.getHttpServer(),
+    )
+      .mutate(requestRecoveryPasswordQL)
+      .variables({
+        email: user1.email,
+      })
+      .expectNoErrors()
+
+    expect(response.data).not.toBeNull()
+    expect(response.data!.requestRecoveryPassword).toBe(true)
+
+    const sent = getSentEmailHistory()[0]
+    expect(sent.to).toBe(user1.email)
+    expect(sent.data!.username).toBe(user1.username)
+    clearSentEmailHistory()
   })
 
   function signOut(bearerToken = token) {
