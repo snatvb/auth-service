@@ -9,22 +9,14 @@ import {
   removeMe,
   expectNotFound,
   updateUser,
-  expectUnauthorized,
-  expectBadRequest,
 } from './helpers'
 import {
   ResponseUserQuery,
   userQL,
   ResponseUsersQuery,
   usersQL,
-  ResponseChangePassword,
-  changePasswordQL,
   removeUserDevQL,
   ResponseRemoveUserDev,
-  issuePasswordRecoveryTokenDevQL,
-  ResponseIssuePasswordRecoveryTokenDev,
-  ResponseRecoveryPassword,
-  recoveryPasswordQL,
 } from './helpers/gql'
 
 const user1 = {
@@ -144,109 +136,5 @@ describe('Users (e2e)', () => {
       })
 
     expectForbidden(response)
-  })
-
-  it('Change password', async () => {
-    const response = await request<ResponseChangePassword>(app.getHttpServer())
-      .set('Authorization', `Bearer ${token}`)
-      .mutate(changePasswordQL)
-      .variables({
-        id: user.id,
-        newPassword: 'new_password',
-        oldPassword: user1.password,
-      })
-
-    expect(response.data).not.toBeNull()
-    expect(response.data!.changePassword).toBe(true)
-  })
-
-  it('Change password should 401 non auth', async () => {
-    const response = await request<ResponseChangePassword>(app.getHttpServer())
-      .mutate(changePasswordQL)
-      .variables({
-        id: user.id,
-        newPassword: 'new_password',
-        oldPassword: user1.password,
-      })
-
-    expectUnauthorized(response)
-  })
-  it('Change password should 403', async () => {
-    const response = await request<ResponseChangePassword>(app.getHttpServer())
-      .set('Authorization', `Bearer ${token}`)
-      .mutate(changePasswordQL)
-      .variables({
-        id: secondUser.id,
-        newPassword: 'new_password',
-        oldPassword: user1.password,
-      })
-
-    expectForbidden(response)
-  })
-
-  it('Change password with incorrect current password should fail', async () => {
-    const response = await request<ResponseChangePassword>(app.getHttpServer())
-      .set('Authorization', `Bearer ${token}`)
-      .mutate(changePasswordQL)
-      .variables({
-        id: user.id,
-        newPassword: 'new_password',
-        oldPassword: "I'm not a password",
-      })
-
-    expect(response.data).toBeNull()
-    expectBadRequest(response)
-  })
-
-  it('Recovery password', async () => {
-    const responseToken = await request<ResponseIssuePasswordRecoveryTokenDev>(
-      app.getHttpServer(),
-    )
-      .mutate(issuePasswordRecoveryTokenDevQL)
-      .variables({
-        id: user.id,
-      })
-      .expectNoErrors()
-
-    expect(responseToken.data).not.toBeNull()
-    const token = responseToken.data!.issuePasswordRecoveryToken
-    expect(typeof token).toBe('string')
-
-    const newPassword = 'new_password'
-    const response = await request<ResponseRecoveryPassword>(
-      app.getHttpServer(),
-    )
-      .mutate(recoveryPasswordQL)
-      .variables({
-        token,
-        password: newPassword,
-      })
-      .expectNoErrors()
-
-    expect(response.data).not.toBeNull()
-    expect(response.data!.recoveryPassword.username).toBe(user1.username)
-
-    const responseLogin = await loginUser(app, {
-      ...user1,
-      password: newPassword,
-    })
-    expect(responseLogin.user.username).toBe(user1.username)
-    expect(typeof responseLogin.accessToken).toBe('string')
-    expect(typeof responseLogin.refreshToken).toBe('string')
-  })
-
-  it('Recovery password with invalid token should fail', async () => {
-    const newPassword = 'new_password'
-    const response = await request<ResponseRecoveryPassword>(
-      app.getHttpServer(),
-    )
-      .mutate(recoveryPasswordQL)
-      .variables({
-        token: 'INVALID_TOKEN',
-        password: newPassword,
-      })
-
-    expect(response.data).toBeNull()
-    expectBadRequest(response)
   })
 })
