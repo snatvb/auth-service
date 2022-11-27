@@ -11,15 +11,21 @@ import { User } from '@prisma/client'
 import { PrismaService } from 'prisma/prisma.service'
 import { randomBytes, createHash } from 'crypto'
 import { SignUpInput } from './dto/sign-up.input'
+import { ConfigService } from '@nestjs/config'
 
 @Injectable()
 export class AuthService {
+  private readonly JWT_RT_EXPIRES_MS: number
   constructor(
     private readonly users: UsersService,
     private readonly jwt: JwtService,
     private readonly verification: VerificationService,
     private readonly prisma: PrismaService,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    this.JWT_RT_EXPIRES_MS =
+      config.getOrThrow<number>('JWT_RT_EXPIRES') * 60 * 60 * 1000
+  }
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.users.findOneByUsername(username)
@@ -125,6 +131,11 @@ export class AuthService {
     if (!token) {
       throw new NotFoundException('Token not found')
     }
+
+    if (token.updatedAt.getTime() + this.JWT_RT_EXPIRES_MS < Date.now()) {
+      throw new BadRequestException('Refresh token expired')
+    }
+
     const { refreshToken, user, accessToken } = await this.issueToken(
       token.user.username,
     )
