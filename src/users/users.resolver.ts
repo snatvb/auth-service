@@ -2,7 +2,6 @@ import { JwtAuthContext } from './../auth/jwt-auth.guard'
 import { Resolver, Query, Mutation, Args, Context } from '@nestjs/graphql'
 import { UsersService } from './users.service'
 import { UserEntity } from './entities/user.entity'
-import { CreateUserInput } from './dto/create-user.input'
 import { UpdateUserInput } from './dto/update-user.input'
 import {
   BadRequestException,
@@ -43,11 +42,6 @@ export class UsersResolver {
   @Mutation(() => UserEntity)
   updateUser(@Args('id') id: string, @Args('input') input: UpdateUserInput) {
     return this.users.update(id, input)
-  }
-
-  @Mutation(() => UserEntity)
-  createUser(@Args('createUserInput') createUserInput: CreateUserInput) {
-    return this.users.create(createUserInput)
   }
 
   @UseGuards(JwtAuthGuard, OwnerGuard((_, { id }) => id))

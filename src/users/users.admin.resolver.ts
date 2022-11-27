@@ -2,6 +2,7 @@ import { UseGuards } from '@nestjs/common'
 import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql'
 import { User } from '@prisma/client'
 import { JwtAuthGuard } from '~/auth/jwt-auth.guard'
+import { CreateUserInput } from './dto/create-user.input'
 import { FullUpdateUserInput } from './dto/full-update-user.input'
 import { Role } from './entities/role.enum'
 import { UserEntity } from './entities/user.entity'
@@ -34,8 +35,16 @@ export class UsersAdminResolver {
   }
 
   @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Mutation(() => UserEntity)
   removeUser(@Args('id') id: string) {
     return this.users.remove(id)
+  }
+
+  @Roles(Role.Admin)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Mutation(() => UserEntity)
+  createUser(@Args('createUserInput') createUserInput: CreateUserInput) {
+    return this.users.create(createUserInput)
   }
 }
