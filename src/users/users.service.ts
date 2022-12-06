@@ -96,6 +96,27 @@ export class UsersService {
     })
   }
 
+  async requestChangeEmail(id: string, newEmail: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { email: true, username: true },
+    })
+    if (!user) {
+      throw new BadRequestException('User not found')
+    }
+
+    if (user.email === newEmail) {
+      throw new BadRequestException('New email is the same as the old one')
+    }
+
+    return await this.verification.sendChangeEmail({
+      userId: id,
+      email: user.email,
+      username: user.username,
+      newEmail,
+    })
+  }
+
   async update(
     id: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -120,6 +141,13 @@ export class UsersService {
       data: updateUserInput,
     })
     return updated
+  }
+
+  updateEmail(id: string, email: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { email },
+    })
   }
 
   remove(id: string) {

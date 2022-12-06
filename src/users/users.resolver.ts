@@ -64,4 +64,13 @@ export class UsersResolver {
       .changePassword(id, oldPassword, newPassword)
       .then(() => true)
   }
+
+  @UseGuards(JwtAuthGuard, OwnerGuard((_, { id }) => id))
+  @Query(() => Boolean)
+  requestChangeEmail(
+    @Args('id') id: string,
+    @Args('newEmail') newEmail: string,
+  ) {
+    return this.users.requestChangeEmail(id, newEmail)
+  }
 }

@@ -1,0 +1,23 @@
+doctype 5
+html(lang="en")
+    head
+        style(type="text/css").
+            .token {
+                padding: 2px 4px;
+                border-radius: 5px;
+                background: rgb(33, 38, 45);
+                color: #eee;
+                margin: 0 4px;
+            }
+        body 
+            p Hi #{username},
+            p 
+                | You have requested change an email with #{appName} to #{newEmail}. Please click the
+                | a(href=link) link
+                | below to accept this.
+            p Your token is
+                span(class="token") #{token}
+
+            p If you did not request this, please change your password and terminate all another sessions.
+            p Thanks,
+            p #{appName}
