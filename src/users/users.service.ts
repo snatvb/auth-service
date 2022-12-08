@@ -117,6 +117,26 @@ export class UsersService {
     })
   }
 
+  async changeEmail(token: string): Promise<User> {
+    const payload = await this.verification.verifyChangeEmail(token)
+    if (!payload) {
+      throw new BadRequestException('Invalid token')
+    }
+
+    const userUpdated = await this.prisma.user.update({
+      where: { id: payload.userId },
+      data: { email: payload.email, emailVerified: false },
+    })
+
+    await this.verification.sendVerificationEmail({
+      userId: payload.userId,
+      email: payload.email,
+      username: userUpdated.username,
+    })
+
+    return userUpdated
+  }
+
   async update(
     id: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

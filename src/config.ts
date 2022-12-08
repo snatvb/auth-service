@@ -25,6 +25,7 @@ export const validationSchema = joi.object({
   MAILER_PASSWORD: joi.string().required(),
   MAILER_FROM: joi.string().required(),
   MAILER_RECOVERY_LINK_TEMPLATE: joi.string().required(),
+  MAILER_VERIFY_EMAIL_LINK_TEMPLATE: joi.string().required(),
   MAILER_CHANGE_EMAIL_LINK_TEMPLATE: joi.string().required(),
   MAILER_APP_NAME: joi.string().required(),
 })

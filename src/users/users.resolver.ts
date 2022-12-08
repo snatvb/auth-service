@@ -73,4 +73,10 @@ export class UsersResolver {
   ) {
     return this.users.requestChangeEmail(id, newEmail)
   }
+
+  @UseGuards(JwtAuthGuard, OwnerGuard((_, { id }) => id))
+  @Mutation(() => UserEntity)
+  changeEmail(@Args('token') token: string): Promise<User> {
+    return this.users.changeEmail(token)
+  }
 }

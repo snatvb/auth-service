@@ -295,3 +295,33 @@ export const resendVerificationQL = gql`
 export type ResponseResendVerification = {
   resendVerification: boolean
 }
+
+export const requestChangeEmailQL = gql`
+  query requestChangeEmail($id: String!, $newEmail: String!) {
+    requestChangeEmail(id: $id, newEmail: $newEmail)
+  }
+`
+
+export type ResponseRequestChangeEmail = {
+  requestChangeEmail: boolean
+}
+
+export const changeEmailQL = gql`
+  mutation changeEmail($token: String!) {
+    changeEmail(token: $token) {
+      id
+      username
+      email
+      emailVerified
+    }
+  }
+`
+
+export type ResponseChangeEmail = {
+  changeEmail: {
+    id: string
+    username: string
+    email: string
+    emailVerified: boolean
+  }
+}

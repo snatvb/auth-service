@@ -58,6 +58,8 @@ export class VerificationService {
       expiresIn: string
     }
     passwordRecoveryLinkTemplate: string
+    emailVerificationLinkTemplate: string
+    emailChangeLinkTemplate: string
     appName: string
   }
 
@@ -82,6 +84,12 @@ export class VerificationService {
       passwordRecoveryLinkTemplate: this.config.getOrThrow<string>(
         'MAILER_RECOVERY_LINK_TEMPLATE',
       ),
+      emailVerificationLinkTemplate: this.config.getOrThrow<string>(
+        'MAILER_VERIFY_EMAIL_LINK_TEMPLATE',
+      ),
+      emailChangeLinkTemplate: this.config.getOrThrow<string>(
+        'MAILER_CHANGE_EMAIL_LINK_TEMPLATE',
+      ),
       appName: this.config.getOrThrow<string>('MAILER_APP_NAME'),
     }
   }
@@ -101,7 +109,7 @@ export class VerificationService {
         data: {
           token,
           username,
-          link: t.renderText(this.cfg.passwordRecoveryLinkTemplate, {
+          link: t.renderText(this.cfg.emailVerificationLinkTemplate, {
             token,
           }),
           appName: this.cfg.appName,
@@ -151,12 +159,12 @@ export class VerificationService {
       .sendEmail({
         to: email,
         subject: 'Email verification',
-        templateName: 'verify-email',
+        templateName: 'change-email',
         data: {
           token,
           username,
           newEmail,
-          link: t.renderText(this.cfg.passwordRecoveryLinkTemplate, {
+          link: t.renderText(this.cfg.emailChangeLinkTemplate, {
             token,
           }),
           appName: this.cfg.appName,

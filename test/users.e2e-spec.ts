@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common'
 import request from 'supertest-graphql'
+import { U } from '~/helpers'
 import { UserEntity } from '~/users/entities/user.entity'
 import {
   createApp,
@@ -11,6 +12,7 @@ import {
   updateUser,
   removeUsersByUsernames,
 } from './helpers'
+import { getSentEmailHistory } from './helpers/EmailMockService'
 import {
   ResponseUserQuery,
   userQL,
@@ -18,6 +20,10 @@ import {
   usersQL,
   removeUserDevQL,
   ResponseRemoveUserDev,
+  requestChangeEmailQL,
+  ResponseRequestChangeEmail,
+  changeEmailQL,
+  ResponseChangeEmail,
 } from './helpers/gql'
 
 const user1 = {
@@ -138,5 +144,45 @@ describe('Users (e2e)', () => {
       })
 
     expectForbidden(response)
+  })
+
+  it('Change email', async () => {
+    const newEmail = 'changed_email_test@hhe.eez'
+    const responseRequest = await request<ResponseRequestChangeEmail>(
+      app.getHttpServer(),
+    )
+      .set('Authorization', `Bearer ${token}`)
+      .query(requestChangeEmailQL)
+      .variables({
+        id: user.id,
+        newEmail,
+      })
+      .expectNoErrors()
+
+    expect(responseRequest.data).not.toBeNull()
+    expect(responseRequest.data!.requestChangeEmail).toBe(true)
+
+    const sentToken = U.array.last(getSentEmailHistory())
+    expect(typeof sentToken.data!.token).toBe('string')
+    expect(sentToken.data!.link.includes('change')).toBe(true)
+    expect(sentToken.templateName).toBe('change-email')
+
+    const responseChange = await request<ResponseChangeEmail>(
+      app.getHttpServer(),
+    )
+      .set('Authorization', `Bearer ${token}`)
+      .mutate(changeEmailQL)
+      .variables({
+        token: sentToken.data!.token,
+      })
+      .expectNoErrors()
+
+    expect(responseChange.data).not.toBeNull()
+    expect(responseChange.data!.changeEmail.email).toBe(newEmail)
+    expect(responseChange.data!.changeEmail.username).toBe(user1.username)
+
+    const sentVerify = U.array.last(getSentEmailHistory()) //?
+    expect(sentVerify.data!.link.includes('verify')).toBe(true)
+    expect(sentVerify.templateName).toBe('verify-email')
   })
 })
