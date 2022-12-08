@@ -11,6 +11,8 @@ export const validationSchema = joi.object({
   JWT_EMAIL_EXPIRES: joi.string().required(),
   JWT_RECOVERY_SECRET: joi.string().required(),
   JWT_RECOVERY_EXPIRES: joi.string().required(),
+  JWT_CHANGE_EMAIL_EXPIRES: joi.string().required(),
+  JWT_CHANGE_EMAIL_SECRET: joi.string().required(),
 
   POSTGRES_PASSWORD: joi.string().required(),
   POSTGRES_USER: joi.string().required(),
@@ -23,5 +25,7 @@ export const validationSchema = joi.object({
   MAILER_PASSWORD: joi.string().required(),
   MAILER_FROM: joi.string().required(),
   MAILER_RECOVERY_LINK_TEMPLATE: joi.string().required(),
+  MAILER_VERIFY_EMAIL_LINK_TEMPLATE: joi.string().required(),
+  MAILER_CHANGE_EMAIL_LINK_TEMPLATE: joi.string().required(),
   MAILER_APP_NAME: joi.string().required(),
 })

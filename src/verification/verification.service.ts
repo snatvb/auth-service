@@ -35,6 +35,13 @@ export type SendEmailVerificationArgs = {
   username: string
 }
 
+export type SendChangeEmailVerificationArgs = {
+  email: string
+  userId: string
+  newEmail: string
+  username: string
+}
+
 @Injectable()
 export class VerificationService {
   private cfg: {
@@ -46,7 +53,13 @@ export class VerificationService {
       secret: string
       expiresIn: string
     }
+    changeEmail: {
+      secret: string
+      expiresIn: string
+    }
     passwordRecoveryLinkTemplate: string
+    emailVerificationLinkTemplate: string
+    emailChangeLinkTemplate: string
     appName: string
   }
 
@@ -60,6 +73,10 @@ export class VerificationService {
         secret: this.config.getOrThrow<string>('JWT_EMAIL_SECRET'),
         expiresIn: this.config.getOrThrow<string>('JWT_EMAIL_EXPIRES'),
       },
+      changeEmail: {
+        secret: this.config.getOrThrow<string>('JWT_CHANGE_EMAIL_SECRET'),
+        expiresIn: this.config.getOrThrow<string>('JWT_CHANGE_EMAIL_EXPIRES'),
+      },
       password: {
         secret: this.config.getOrThrow<string>('JWT_RECOVERY_SECRET'),
         expiresIn: this.config.getOrThrow<string>('JWT_RECOVERY_EXPIRES'),
@@ -67,9 +84,16 @@ export class VerificationService {
       passwordRecoveryLinkTemplate: this.config.getOrThrow<string>(
         'MAILER_RECOVERY_LINK_TEMPLATE',
       ),
+      emailVerificationLinkTemplate: this.config.getOrThrow<string>(
+        'MAILER_VERIFY_EMAIL_LINK_TEMPLATE',
+      ),
+      emailChangeLinkTemplate: this.config.getOrThrow<string>(
+        'MAILER_CHANGE_EMAIL_LINK_TEMPLATE',
+      ),
       appName: this.config.getOrThrow<string>('MAILER_APP_NAME'),
     }
   }
+
   async sendVerificationEmail({
     email,
     userId,
@@ -85,7 +109,7 @@ export class VerificationService {
         data: {
           token,
           username,
-          link: t.renderText(this.cfg.passwordRecoveryLinkTemplate, {
+          link: t.renderText(this.cfg.emailVerificationLinkTemplate, {
             token,
           }),
           appName: this.cfg.appName,
@@ -100,6 +124,54 @@ export class VerificationService {
     const token = this.jwt.sign({ userId, email }, { secret, expiresIn })
 
     return token
+  }
+
+  issueChangeEmailToken(userId: string, email: string) {
+    const { secret, expiresIn } = this.cfg.changeEmail
+    const token = this.jwt.sign({ userId, email }, { secret, expiresIn })
+
+    return token
+  }
+
+  async verifyChangeEmail(token: string): Promise<TokenEmailPayload | void> {
+    try {
+      const payload = await this.jwt.verify(token, {
+        secret: this.cfg.changeEmail.secret,
+      })
+
+      if (Joi.valid(payload, tokenEmailSchema)) {
+        return payload
+      }
+      return undefined
+    } catch (error) {
+      return undefined
+    }
+  }
+
+  async sendChangeEmail({
+    email,
+    userId,
+    newEmail,
+    username,
+  }: SendChangeEmailVerificationArgs): Promise<boolean> {
+    const token = await this.issueChangeEmailToken(userId, newEmail)
+    return await this.email
+      .sendEmail({
+        to: email,
+        subject: 'Email verification',
+        templateName: 'change-email',
+        data: {
+          token,
+          username,
+          newEmail,
+          link: t.renderText(this.cfg.emailChangeLinkTemplate, {
+            token,
+          }),
+          appName: this.cfg.appName,
+        },
+      })
+      .then(() => true)
+      .catch(() => false)
   }
 
   issuePasswordToken(userId: string) {

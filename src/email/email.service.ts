@@ -2,7 +2,7 @@ import { MailerService } from '@nestjs-modules/mailer'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 
-export type TemplateName = 'verify-email' | 'reset-password'
+export type TemplateName = 'verify-email' | 'reset-password' | 'change-email'
 
 export type SendArgs = {
   templateName: TemplateName
